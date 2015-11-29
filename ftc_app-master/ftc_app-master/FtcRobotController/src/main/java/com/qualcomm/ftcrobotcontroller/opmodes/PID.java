@@ -33,9 +33,9 @@ public class PID {
         cur = currentPos;
         iAcc += tgt - cur;//add to the integral value the distance off the target
         dDiff = oldPos - cur;
-        outputVal = iAcc * kI;
-        outputVal += dDiff * kD;
-        outputVal += (tgt - cur) * kP;
+        //outputVal = iAcc * kI;
+        //outputVal += dDiff * kD;
+        outputVal = (tgt - cur) * kP;
         return(outputVal);
     }
 }

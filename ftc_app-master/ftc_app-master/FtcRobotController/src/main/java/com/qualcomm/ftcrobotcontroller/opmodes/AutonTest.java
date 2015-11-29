@@ -52,8 +52,8 @@ public class AutonTest extends OpMode {
         rightMotor.setDirection(DcMotor.Direction.REVERSE);
         rightMotor2.setDirection(DcMotor.Direction.REVERSE);//reverse some wheels
 
-        leftPID = new PID(0.5,0,0.5);
-        rightPID = new PID(0.5,0,0.5);
+        leftPID = new PID(-0.001,0,0);
+        rightPID = new PID(-0.001,0,0);
         alignPID = new PID(0.5, 0.01, 0.5);
     }
 
@@ -64,8 +64,8 @@ public class AutonTest extends OpMode {
                 case 0:
                     leftTarget = 0;
                     rightTarget = 0;
-                    leftPID.setTgt(10);
-                    rightPID.setTgt(10);
+                    leftPID.setTgt(-10000);
+                    rightPID.setTgt(-10000);
                     moving = true;
                 default:
                     stop();
@@ -73,24 +73,41 @@ public class AutonTest extends OpMode {
         }else{
             move();
         }
+        telemetry.addData("posleft", leftMotor.getCurrentPosition());
+        telemetry.addData("posR", rightMotor2.getCurrentPosition());
+        telemetry.addData("rightPower", rightSpeed);
     }
     public void stop(){}
     void move(){
         leftSpeed = leftPID.run(leftMotor.getCurrentPosition());
-        rightSpeed = rightPID.run(rightMotor.getCurrentPosition());
-        alignPID.run(leftMotor.getCurrentPosition() - rightMotor.getCurrentPosition());
-        leftSpeed += alignPID.outputVal;
-        rightSpeed += - alignPID.outputVal;
+        rightSpeed = rightPID.run(rightMotor2.getCurrentPosition());
+        //alignPID.run(leftMotor.getCurrentPosition() - rightMotor.getCurrentPosition());
+        //leftSpeed += alignPID.outputVal;
+        //rightSpeed += - alignPID.outputVal;
+        if(leftSpeed > 1){
+            leftSpeed = 1;
+        }else if(leftSpeed < -1){
+            leftSpeed = -1;
+        }
+        if(rightSpeed > 1){
+            rightSpeed = 1;
+        }else if(rightSpeed < -1){
+            rightSpeed = -1;
+        }
         leftMotor.setPower(leftSpeed);
         leftMotor2.setPower(leftSpeed);
         rightMotor.setPower(rightSpeed);
         rightMotor2.setPower(rightSpeed);
-        if(leftPID.getDistance() < 0.1 && rightPID.getDistance() < 0.1 && alignPID.getDistance() < 0.1){
+        /*if(leftPID.getDistance() < 0.1 && rightPID.getDistance() < 0.1 && alignPID.getDistance() < 0.1){
             moving = false;
             state++;
             leftPID.reset();
             rightPID.reset();
             alignPID.reset();
-        }
+            leftMotor.setPower(0);
+            leftMotor2.setPower(0);
+            rightMotor.setPower(0);
+            rightMotor2.setPower(0);
+        }*/
     }
 }

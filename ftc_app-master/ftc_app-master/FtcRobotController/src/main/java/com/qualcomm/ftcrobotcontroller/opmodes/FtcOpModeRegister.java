@@ -64,6 +64,7 @@ public class FtcOpModeRegister implements OpModeRegister {
     manager.register ("TankDriveRecording", TankDriveRecording.class);
     manager.register("TankDrivePlayBack", TankDrivePlayBack.class);
     manager.register("AutoTest", AutonTest.class);
+    manager.register("autonomous test stuff", AutonomousMode.class);
         /*
      * Uncomment any of the following lines if you want to register an op mode.
      */
