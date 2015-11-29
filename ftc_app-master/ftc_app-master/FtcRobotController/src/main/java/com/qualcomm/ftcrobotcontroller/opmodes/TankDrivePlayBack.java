@@ -27,7 +27,7 @@ public class TankDrivePlayBack extends OpMode{
     float leftSpeed = 0;
     float rightSpeed = 0;
     float armPower = 0;
-    private DcMotorController DcDrive, DcDrive2, ArmDrive;//create a DcMotoController
+    private DcMotorController DcDrive, DcDrive2, ArmDrive;//create a DcMotorController
     private DcMotor leftMotor, rightMotor, leftMotor2, rightMotor2, arm1, arm2;//objects for the left and right motors
     private AnalogInput pot;
     private DeviceInterfaceModule cdi;
@@ -58,29 +58,23 @@ public class TankDrivePlayBack extends OpMode{
 
     public void loop() {
         /*this section is the program that will continuously run while the robot is driving.*/
-        try {
-            PlayBack();
+        try {//use try{to make it not fail if it doesnt work
+            PlayBack();//plays back the prerecorded files
         } catch (IOException e){
             e.printStackTrace();
         }
         setMotors();
-        telemetry.addData("potentiometer voltage", "pot power: " + String.format("%.2f", potVolt));
-        //useless button section
-        telemetry.addData("thing", (gamepad2.a) ? "" : "hello");//say "Hello" if A is pressed
-        telemetry.addData("thing", (gamepad1.a) ? "" : ":)");//say ":)" if X is pressed
-//elmo says hi :D
-
     }
     public void stop(){}
 
     public void PlayBack() throws IOException{
 
         try {
-            Scanner LeftFile = new Scanner(LeftRecord);
+            Scanner LeftFile = new Scanner(LeftRecord);//read  the file
             Scanner RightFile = new Scanner(RightRecord);
             Scanner ArmFile = new Scanner(ArmRecord);
             if (LeftFile.hasNextLine()){
-                leftSpeed = Float.parseFloat(LeftFile.nextLine());
+                leftSpeed = Float.parseFloat(LeftFile.nextLine());//set the speeds to the values read from the file
             }
             if (RightFile.hasNextLine()){
                 rightSpeed = Float.parseFloat(RightFile.nextLine());
@@ -97,15 +91,15 @@ public class TankDrivePlayBack extends OpMode{
         rightMotor2.setPower(rightSpeed);
         leftMotor.setPower(leftSpeed);//set the motors to the powers
         rightMotor.setPower(rightSpeed);
-        climberThing.setPosition(servoPos);
-        if((potVolt >= maxSpool && armPower >= 0) || (potVolt <= minSpool && armPower <= 0)){//If the arm is being moved ot of it range, dont move it.
-            arm1.setPower(0);
-            arm2.setPower(0);
-        }else{//other wise do move it.
+        //climberThing.setPosition(servoPos);
+        //if((potVolt >= maxSpool && armPower >= 0) || (potVolt <= minSpool && armPower <= 0)){//If the arm is being moved ot of it range, dont move it.
+            //arm1.setPower(0);
+            //arm2.setPower(0);
+        //}else{//other wise do move it.
             arm1.setPower(armPower);
             arm2.setPower(armPower);
-        }
-    }//remember not to wipe to hard when wiping off your mouse. otherwise it breaks everything. Your welcome I slimed your mouse ;)
+        //}
+    }
 
     double expo(double in, double amount){
         if (in > 0){

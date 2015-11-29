@@ -26,12 +26,15 @@ public class TankDriveRecording extends OpMode{
     double servoPos = 0;
     double servoMin = 0;
     double servoMax = 0.9;
-    private DcMotorController DcDrive, DcDrive2, ArmDrive;//create a DcMotoController
+    private DcMotorController DcDrive, DcDrive2, ArmDrive;//create a DcMotorController
     private DcMotor leftMotor, rightMotor, leftMotor2, rightMotor2, arm1, arm2;//objects for the left and right motors
     private AnalogInput pot;
     private DeviceInterfaceModule cdi;
     private ServoController servoCont;
     private Servo climberThing;
+
+    private boolean stopRec = false;
+
     public File LeftRecord = new File ("LeftSpeed.txt");
     public File RightRecord = new File ("RightSpeed.txt");
     public File ArmRecord = new File ("ArmPower.txt");
@@ -60,31 +63,30 @@ public class TankDriveRecording extends OpMode{
         getInputs();
         mix();
         setMotors();
-        try {
-            Record();
+        try {//use try{to make it not fail if it doesnt workbb
+            Record();//try to record the values in a file
         } catch (IOException e){
             e.printStackTrace();
         }
-        telemetry.addData("potentiometer voltage", "pot power: " + String.format("%.2f", potVolt));
+        //telemetry.addData("potentiometer voltage", "pot power: " + String.format("%f", potVolt));
         //useless button section
-        telemetry.addData("thing", (gamepad2.a) ? "" : "hello");//say "Hello" if A is pressed
-        telemetry.addData("thing", (gamepad1.a) ? "" : ":)");//say ":)" if X is pressed
-//elmo says hi :D
 
     }
     public void stop(){}
 
     public void Record() throws IOException{
         try {
-            FileWriter LeftWrite = new FileWriter(LeftRecord, false);
+            FileWriter LeftWrite = new FileWriter(LeftRecord, false);//write the values to a file
             FileWriter RightWrite = new FileWriter(RightRecord, false);
             FileWriter ArmWrite = new FileWriter(ArmRecord, false);
             PrintWriter LeftWriter = new PrintWriter(LeftWrite);
             PrintWriter RightWriter = new PrintWriter(RightWrite);
             PrintWriter ArmWriter = new PrintWriter(ArmWrite);
-            LeftWriter.println(leftSpeed);
-            RightWriter.println(rightSpeed);
-            ArmWriter.println(armPower);
+            if(!stopRec) {
+                LeftWriter.println(leftSpeed);
+                RightWriter.println(rightSpeed);
+                ArmWriter.println(armPower);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -95,7 +97,10 @@ public class TankDriveRecording extends OpMode{
         leftSpeed = gamepad1.left_stick_y;//get the inputs from the joysticksm
         rightSpeed = gamepad1.right_stick_y;
         armPower = gamepad2.left_stick_y;
-        servoPos = (gamepad2.left_trigger != 0) ? servoMin : servoMax;
+        //servoPos = (gamepad2.left_trigger != 0) ? servoMin : servoMax;
+        //if(gamepad1.left_bumper && gamepad1.right_bumper){
+        //    stop = true;
+        //}
     }
     void setMotors(){
         leftMotor2.setPower(leftSpeed);
@@ -110,7 +115,7 @@ public class TankDriveRecording extends OpMode{
             arm1.setPower(armPower);
             arm2.setPower(armPower);
         }
-    }//remember not to wipe to hard when wiping off your mouse. otherwise it breaks everything. Your welcome I slimed your mouse ;)
+    }
     void mix(){
         /*this mixing algorithm works by doing the following:
         * -mix the inputs into turn/speed

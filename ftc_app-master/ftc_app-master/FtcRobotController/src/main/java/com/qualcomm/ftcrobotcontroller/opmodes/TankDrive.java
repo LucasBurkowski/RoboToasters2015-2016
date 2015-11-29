@@ -1,14 +1,27 @@
 package com.qualcomm.ftcrobotcontroller.opmodes;
 
+import android.content.Context;
+import android.media.MediaPlayer;
+import android.media.SoundPool;
+import android.net.Uri;
+
+import com.qualcomm.ftcrobotcontroller.FtcRobotControllerActivity;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.*;
+import com.qualcomm.robotcore.util.BatteryChecker;
 import com.qualcomm.robotcore.util.Range;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 
 /**
  * Created by team 8487 on 11/8/2015.
- */
-//Don't forget to mention that Spencer helped as well
+*/
 public class TankDrive extends OpMode{
+
+    //double targetMult  = 1;
 
     double leftSpeed = 0;//variables for motor speeds
     double rightSpeed = 0;
@@ -16,17 +29,31 @@ public class TankDrive extends OpMode{
     double speedExpo = 1.4;
     double armPower = 0;
     int potVolt = 0;
-    int maxSpool = 10000000;
-    int minSpool = 0;
+    long currentTime;
+    //int maxSpool = 10000000;
+    //int minSpool = 0;
     double servoPos = 0;
-    double servoMin = 0;
-    double servoMax = 0.9;
+    double servoPos2 = 0;
+    double servoMin = 0, servoMin2 = .65;
+    double servoMax = .8, servoMax2 = 0;
+    int servoDeb = 30;
     private DcMotorController DcDrive, DcDrive2, ArmDrive;//create a DcMotoController
     private DcMotor leftMotor, rightMotor, leftMotor2, rightMotor2, arm1, arm2;//objects for the left and right motors
     private AnalogInput pot;
     private DeviceInterfaceModule cdi;
     private ServoController servoCont;
-    private Servo climberThing;
+    private Servo climberThing,climberThing2;
+
+
+    private Context cont;
+    //private BatteryChecker batt;
+   //private BatteryChecker.BatteryWatcher battWatcher;
+
+
+    //WARNING completely unnecesary
+    private MediaPlayer audioPlayer;
+    Uri filePathThing = Uri.parse("file:///phone/SeriousFileTotallyNotAMeme.mp3");
+    //back to relevant programmig
     public TankDrive(){}//constructor
 
     public void init(){//initializtion method, runs once at the beginning
@@ -45,42 +72,82 @@ public class TankDrive extends OpMode{
         pot = hardwareMap.analogInput.get("pot");
         servoCont = hardwareMap.servoController.get("SrvCnt");
         climberThing = hardwareMap.servo.get("Srv");
+        climberThing2 = hardwareMap.servo.get("Srv2");
+
+        cont = hardwareMap.appContext;
+        //batt = new BatteryChecker(cont, battWatcher, 100);
+        //batt.startBatteryMonitoring();
+
+        servoPos = servoMax;
+        servoPos2 = servoMax2;
+
+        audioPlayer = MediaPlayer.create(cont, filePathThing);
+        audioPlayer.start();
     }
     public void loop() {
         /*this section is the program that will continuously run while the robot is driving.*/
         getInputs();
         mix();
         setMotors();
-        telemetry.addData("potentiometer voltage", "pot power: " + String.format("%.2f", potVolt));
-        //useless button section
-        telemetry.addData("thing", (gamepad2.a) ? "" : "hello");//say "Hello" if A is pressed
-        telemetry.addData("thing", (gamepad1.a) ? "" : ":)");//say ":)" if X is pressed
-//elmo says hi :D
+        //////////////**//**///telemetry.addData("Bat. voltage", batt.getBatteryLevel());//write potentionmenter voltage
+        //try{
+        //    File battRecord = new File ("/Phone/Download/batt.txt");
+        //
+        //    if (battRecord.exists()){
+        //        battRecord.createNewFile();
+        //    }
+        //    FileWriter battOut = new FileWriter(battRecord.getAbsoluteFile());
+        //    BufferedWriter tacobell = new BufferedWriter(battOut);
+        //    tacobell.write("" + batt.getBatteryLevel());
+        //
+        //} catch (IOException e) {
+        //    e.printStackTrace();
+        //}
     }
     public void stop(){}
 
-    void getInputs(){
+        //armPower = gamepad2.left_stick_y;
+        //servoPos = (gamepad2.left_trigger != 0) ? servoMin : servoMax;
+        //servoPos2 = (gamepad2.right_trigger !=0) ? servoMin : servoMax;
+    void getInputs() {
         potVolt = pot.getValue();
-        leftSpeed = gamepad1.left_stick_y;//get the inputs from the joysticksm
+        leftSpeed = gamepad1.left_stick_y;//get the inputs from the joystick
         rightSpeed = gamepad1.right_stick_y;
         armPower = gamepad2.left_stick_y;
-        servoPos = (gamepad2.left_trigger != 0) ? servoMin : servoMax;
+        if (gamepad2.right_bumper && servoPos == servoMax && servoDeb > 30) {//toggle the servo when LB is pressed
+            servoPos = servoMin;
+            servoDeb = 0;
+        }else if(gamepad2.right_bumper && servoDeb > 30){
+            servoPos = servoMax;
+            servoDeb = 0;
+        }
+        if (gamepad2.left_bumper && servoPos2 == servoMax2 && servoDeb > 30) {//toggle servo when RB is pressed
+            servoPos2 = servoMin2;
+            servoDeb = 0;
+        }else if(gamepad2.left_bumper && servoDeb > 30){
+            servoDeb = 0;
+            servoPos2 = servoMax2;
+        }
+        servoDeb++;//servo debounce-- stops the servo variable from rapidly changing back and forth between up and down.
     }
     void setMotors(){
-        leftMotor2.setPower(leftSpeed);
+        leftMotor2.setPower(leftSpeed);// set the motors to the powers
+        leftMotor.setPower(leftSpeed);
+        //leftMotor.setTargetPosition((int)Math.round((leftMotor.getTargetPosition() + targetMult * leftSpeed)+(leftMotor.getCurrentPosition())/ 2));//set the motor to a target position that's the average of the current and the target position.
         rightMotor2.setPower(rightSpeed);
-        leftMotor.setPower(leftSpeed);//set the motors to the powers
         rightMotor.setPower(rightSpeed);
+        //rightMotor.setTargetPosition((int)Math.round((rightMotor.getTargetPosition() + targetMult * rightSpeed) + (rightMotor.getCurrentPosition())/ 2));
         climberThing.setPosition(servoPos);
+        climberThing2.setPosition(servoPos2);
 
-        if((potVolt >= maxSpool && armPower >= 0) || (potVolt <= minSpool && armPower <= 0)){//If the arm is being moved ot of it range, dont move it.
-            arm1.setPower(0);
-            arm2.setPower(0);
-        }else{//other wise do move it.
+        //if((potVolt >= maxSpool && armPower >= 0) || (potVolt <= minSpool && armPower <= 0)){//If the arm is being moved ot of it range, dont move it.
+            //arm1.setPower(0);
+            //arm2.setPower(0);
+        //}else{//other wise do move it.
             arm1.setPower(armPower);
             arm2.setPower(armPower);
-        }
-    }//remember not to wipe to hard when wiping off your mouse. otherwise it breaks everything. Your welcome I slimed your mouse ;)
+       // }
+    }
     void mix(){
         /*this mixing algorithm works by doing the following:
         * -mix the inputs into turn/speed
@@ -103,5 +170,6 @@ public class TankDrive extends OpMode{
             return(-Math.pow(-in, amount));
         }
     }
+
 }
 
