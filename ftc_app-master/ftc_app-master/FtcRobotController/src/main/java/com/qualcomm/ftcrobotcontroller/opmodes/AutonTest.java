@@ -4,7 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.*;
 import com.qualcomm.robotcore.util.Range;
 /**
- * Created by LeFevre on 11/21/2015.
+ * Created by Team 8487 on 11/21/2015.
  */
 public class AutonTest extends OpMode {
     double leftSpeed = 0;//variables for motor speeds

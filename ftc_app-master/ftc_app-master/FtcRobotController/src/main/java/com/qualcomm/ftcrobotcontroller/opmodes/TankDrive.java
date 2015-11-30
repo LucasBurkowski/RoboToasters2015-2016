@@ -29,9 +29,6 @@ public class TankDrive extends OpMode{
     double speedExpo = 1.4;
     double armPower = 0;
     int potVolt = 0;
-    long currentTime;
-    //int maxSpool = 10000000;
-    //int minSpool = 0;
     double servoPos = 0;
     double servoPos2 = 0;
     double servoMin = 0, servoMin2 = .65;
@@ -44,16 +41,6 @@ public class TankDrive extends OpMode{
     private ServoController servoCont;
     private Servo climberThing,climberThing2;
 
-
-    private Context cont;
-    //private BatteryChecker batt;
-   //private BatteryChecker.BatteryWatcher battWatcher;
-
-
-    //WARNING completely unnecesary
-    private MediaPlayer audioPlayer;
-    Uri filePathThing = Uri.parse("file:///phone/SeriousFileTotallyNotAMeme.mp3");
-    //back to relevant programmig
     public TankDrive(){}//constructor
 
     public void init(){//initializtion method, runs once at the beginning
@@ -73,36 +60,15 @@ public class TankDrive extends OpMode{
         servoCont = hardwareMap.servoController.get("SrvCnt");
         climberThing = hardwareMap.servo.get("Srv");
         climberThing2 = hardwareMap.servo.get("Srv2");
-
-        cont = hardwareMap.appContext;
-        //batt = new BatteryChecker(cont, battWatcher, 100);
-        //batt.startBatteryMonitoring();
-
         servoPos = servoMax;
         servoPos2 = servoMax2;
 
-        audioPlayer = MediaPlayer.create(cont, filePathThing);
-        audioPlayer.start();
     }
     public void loop() {
         /*this section is the program that will continuously run while the robot is driving.*/
         getInputs();
         mix();
         setMotors();
-        //////////////**//**///telemetry.addData("Bat. voltage", batt.getBatteryLevel());//write potentionmenter voltage
-        //try{
-        //    File battRecord = new File ("/Phone/Download/batt.txt");
-        //
-        //    if (battRecord.exists()){
-        //        battRecord.createNewFile();
-        //    }
-        //    FileWriter battOut = new FileWriter(battRecord.getAbsoluteFile());
-        //    BufferedWriter tacobell = new BufferedWriter(battOut);
-        //    tacobell.write("" + batt.getBatteryLevel());
-        //
-        //} catch (IOException e) {
-        //    e.printStackTrace();
-        //}
     }
     public void stop(){}
 
