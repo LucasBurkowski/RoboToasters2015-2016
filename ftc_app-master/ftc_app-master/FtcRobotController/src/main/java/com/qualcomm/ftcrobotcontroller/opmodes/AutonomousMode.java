@@ -2,8 +2,8 @@ package com.qualcomm.ftcrobotcontroller.opmodes;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.*;
-import com.qualcomm.robotcore.util.ElapsedTime;
-/* Created by Lucas on 11/29/2015.
+
+/* Created by team 8487 on 11/29/2015.
  */
 public class AutonomousMode extends OpMode{
     double leftSpeed = 0;//variables for motor speeds
@@ -13,6 +13,8 @@ public class AutonomousMode extends OpMode{
     double servoPos2 = 0;
     double servoMin = 0, servoMin2 = .45;
     double servoMax = .45, servoMax2 = 0;
+    double turnP = 0.0001, turnI = 0.00001, turnD = 0.0001;
+    double lastDiff = 0; double accum = 0;
     private DcMotorController DcDrive, DcDrive2, ArmDrive;//create a DcMotoController
     private DcMotor leftMotor, rightMotor, leftMotor2, rightMotor2, arm1, arm2;//objects for the left and right motors
     private AnalogInput pot;
@@ -52,16 +54,25 @@ public class AutonomousMode extends OpMode{
                 mode = Mode.StartEncoders;
                 break;
             case StartEncoders:
-                setEncoderState(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
-                mode = Mode.Next;
+                if(Math.abs(leftMotor.getCurrentPosition()) < 30 && Math.abs(rightMotor2.getCurrentPosition()) < 30) {
+                    setEncoderState(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
+                    mode = Mode.Next;
+                }else{
+                    mode = Mode.ResetEncoders;
+                }
                 break;
             case Next:
                 switch(moveState){
                     case 0:
                         lTarget= -10000;
                         rTarget = 10000;
-                        kP = 0.0003;
+                        kP = 0.001;
                         threshold = 100;
+                        break;
+                    case 1:
+                        lTarget = 10000;
+                        rTarget = 10000;
+                        kP = 0.01;
                         break;
                     default:
                         lTarget = 0;
@@ -73,9 +84,9 @@ public class AutonomousMode extends OpMode{
                 mode = Mode.Moving;
                 break;
             case Moving:
-                if(!(Math.abs(lTarget - leftMotor.getCurrentPosition()) < threshold && Math.abs(rTarget - rightMotor.getCurrentPosition()) < threshold)) {
-                    leftSpeed = (lTarget - leftMotor.getCurrentPosition()) * kP;
-                    rightSpeed = (rTarget - rightMotor2.getCurrentPosition()) * kP;
+                if(!(Math.abs(lTarget - leftMotor.getCurrentPosition()) < threshold && Math.abs(rTarget - rightMotor2.getCurrentPosition()) < threshold)) {
+                    getSpeeds();
+                    telemetry.addData("oh noes-ness", Math.abs(lTarget - leftMotor.getCurrentPosition()) + Math.abs(rTarget - rightMotor.getCurrentPosition()));
                 }else{
                     mode = Mode.ResetEncoders;
                     leftSpeed = 0;
@@ -90,9 +101,33 @@ public class AutonomousMode extends OpMode{
         telemetry.addData("lPow", rightSpeed);
         telemetry.addData("lPos", rightMotor2.getCurrentPosition());
         telemetry.addData("diff", rTarget - rightMotor2.getCurrentPosition());
+        telemetry.addData("mode", mode + " " + moveState);
     }
     void runMotors(){
-        if(leftSpeed > 1){
+
+        leftMotor.setPower(leftSpeed);
+        rightMotor2.setPower(rightSpeed);
+        leftMotor2.setPower(leftSpeed);
+        rightMotor.setPower(rightSpeed);
+    }
+    void setEncoderState(DcMotorController.RunMode r){
+        leftMotor.setChannelMode(r);
+        rightMotor2.setChannelMode(r);
+    }
+    void getSpeeds(){//calculate the motor speeeds
+        leftSpeed = (lTarget - leftMotor.getCurrentPosition()) * kP;//set the proportional drivers
+        rightSpeed = (rTarget - rightMotor2.getCurrentPosition()) * kP;
+        limitValues();//limit the values
+        /*double lRatio = lTarget / leftMotor.getCurrentPosition(); double rRatio = rTarget / rightMotor2.getCurrentPosition();//find the ratio of the target position and the current position
+        double diff = lRatio - rRatio;//find the difference in teh ratios
+        accum += diff;//add to the accumulator for the intagral value
+        double turnPIDOut = (diff) * turnP + (lastDiff - diff) * turnD + accum * turnI;//find thhe final value
+        rightSpeed += turnPIDOut;
+        leftSpeed -= turnPIDOut;
+        limitValues();//limit th values*/
+    }
+    void limitValues(){
+        if(leftSpeed > 1){//limit the values to 1
             leftSpeed = 1;
         }else if(leftSpeed < -1){
             leftSpeed = -1;
@@ -102,13 +137,5 @@ public class AutonomousMode extends OpMode{
         }else if(rightSpeed < -1){
             rightSpeed = -1;
         }
-        leftMotor.setPower(leftSpeed);
-        rightMotor2.setPower(rightSpeed);
-        leftMotor2.setPower(leftSpeed);
-        rightMotor.setPower(rightSpeed);
-    }
-    void setEncoderState(DcMotorController.RunMode r){
-        leftMotor.setChannelMode(r);
-        rightMotor2.setChannelMode(r);
     }
 }
