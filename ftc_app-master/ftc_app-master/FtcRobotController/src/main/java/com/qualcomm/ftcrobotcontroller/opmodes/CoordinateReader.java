@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.util.StringTokenizer;
 
 /**
- * Created by Lucas on 12/1/2015.
+ * Created by Lucas and team 8487
  */
 public class CoordinateReader {
     int[] CoordinateX = new int[50];

@@ -16,8 +16,8 @@ public class WayPoint extends CoordinateReader{
         Y = GetY();
         RelativeX = GetX();
         RelativeY = GetY();
-        RelativeX = RelativeWaypoints(RelativeX);
-        RelativeY = RelativeWaypoints(RelativeY);
+        RelativeX = RelativeWaypoints(RelativeX, X);
+        RelativeY = RelativeWaypoints(RelativeY, Y);
         RelativeX = ConvertCoordinate(RelativeX);
         RelativeY = ConvertCoordinate(RelativeY);
     }
@@ -31,14 +31,14 @@ public class WayPoint extends CoordinateReader{
         return finalArray;
     }
 
-    public int[] RelativeWaypoints(int[] Axis) {
+    public int[] RelativeWaypoints(int[] Axis, int[] UnChanged) {
         int i = 0;
         if (Axis[0] == 0){
             i = 1;
         }
         else if (Axis[0] > 0){
             for (int j = 0; j < Axis.length-1; j++){
-                Axis[j+1] = Axis[j+1] - Axis[j];
+                Axis[j+1] = UnChanged[j+1] - UnChanged[j];
                 if (j == 0) {
                     Axis[j] = 0;
                 }
