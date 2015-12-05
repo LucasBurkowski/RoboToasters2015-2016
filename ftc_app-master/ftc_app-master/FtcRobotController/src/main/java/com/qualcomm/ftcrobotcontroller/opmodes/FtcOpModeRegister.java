@@ -55,5 +55,6 @@ public class FtcOpModeRegister implements OpModeRegister {
      */
     manager.register ("TankDrive", TankDrive.class);
     manager.register("autonomous test stuff", AutonomousMode.class);
+    manager.register ("COORDAuto", CoordinateInterpretor.class);
   }
 }

@@ -14,7 +14,7 @@ import java.util.Map;
 /* Created by Lucas on 11/29/2015.
  */
 public class CoordinateInterpretor extends OpMode{
-    double turnsPerInch = 1;
+    double turnsPerInch = 1000;
     double leftSpeed = 0;//variables for motor speeds
     double rightSpeed = 0;
     double armPower = 0;
@@ -35,7 +35,7 @@ public class CoordinateInterpretor extends OpMode{
     enum Mode {ResetEncoders, StartEncoders, Next, Turning, Moving}
     Mode mode;
     int threshold = 10;
-    double turnKP = 0.01;
+    double turnKP = 0.001;
     double straigtKP = 0.005;
     double lTarget = 0; double rTarget = 0;
     public CoordinateInterpretor(){}
@@ -68,7 +68,7 @@ public class CoordinateInterpretor extends OpMode{
                 break;
             case StartEncoders:
                 if(leftMotor.getCurrentPosition() == 0 && rightMotor2.getCurrentPosition() ==0){
-                    setEncoderState(DcMotorController.RunMode.RUN_USING_ENCODERS);
+                    setEncoderState(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
                     mode = Mode.Turning;
                     getRot_Dist();
                     lTarget = -turn * turnsPerInch;
@@ -80,6 +80,7 @@ public class CoordinateInterpretor extends OpMode{
             case Turning:
                 leftSpeed = lTarget - leftMotor.getCurrentPosition() * turnKP;
                 rightSpeed = rTarget - rightMotor2.getCurrentPosition() * turnKP;
+                limitValues();
                 runMotors();
                 if(Math.abs(lTarget - leftMotor.getCurrentPosition()) < threshold && Math.abs(rTarget - rightMotor2.getCurrentPosition()) < threshold){
                     while(leftMotor.getCurrentPosition() != 0 && rightMotor2.getCurrentPosition() != 0){
@@ -92,8 +93,8 @@ public class CoordinateInterpretor extends OpMode{
                 }
                 break;
             case Moving:
-                leftSpeed = lTarget - leftMotor.getCurrentPosition() * turnKP;
-                rightSpeed = rTarget - rightMotor2.getCurrentPosition() * turnKP;
+                leftSpeed = (lTarget - leftMotor.getCurrentPosition()) * turnKP;//set the proportional drivers
+                rightSpeed = (rTarget - rightMotor2.getCurrentPosition()) * turnKP;
                 runMotors();
                 if(Math.abs(lTarget - leftMotor.getCurrentPosition()) < threshold && Math.abs(rTarget - rightMotor2.getCurrentPosition()) < threshold){
                     mode = Mode.ResetEncoders;
@@ -105,10 +106,11 @@ public class CoordinateInterpretor extends OpMode{
                 telemetry.addData("OH POOPIES", "SOMETHING HAPPENED");
         }
         telemetry.addData("mode:", mode);
+        telemetry.addData("x", WayPoints.RelativeX[1] + " " + WayPoints.RelativeX[2] + " " + WayPoints.RelativeX[3] + " " + WayPoints.RelativeX[4]);
     }
     void getRot_Dist(){
-        double dX = WayPoints.RelativeX[wayPointNumber];
-        double dY = WayPoints.RelativeY[wayPointNumber];
+        double dX = WayPoints.RelativeX[1];
+        double dY = WayPoints.RelativeY[1];
         double absoluteRotation;
         if(dX != 0) {
             if (dY >= 0) {
@@ -126,7 +128,6 @@ public class CoordinateInterpretor extends OpMode{
         distance = Math.sqrt(Math.pow(dX, 2) + Math.pow(dY, 2));
     }
     void runMotors(){
-
         leftMotor.setPower(leftSpeed);
         rightMotor2.setPower(rightSpeed);
         leftMotor2.setPower(leftSpeed);
@@ -136,5 +137,16 @@ public class CoordinateInterpretor extends OpMode{
         leftMotor.setChannelMode(r);
         rightMotor2.setChannelMode(r);
     }
-
+    void limitValues(){
+        if(leftSpeed > 1){//limit the values to 1
+            leftSpeed = 1;
+        }else if(leftSpeed < -1){
+            leftSpeed = -1;
+        }
+        if(rightSpeed > 1){
+            rightSpeed= 1;
+        }else if(rightSpeed < -1){
+            rightSpeed = -1;
+        }
+    }
 }

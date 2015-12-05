@@ -18,7 +18,7 @@ public class CoordinateReader {
         int iterator = 0;
         StringTokenizer IntMaker;
         try{
-            File CoordinateFile = new File(Environment.DIRECTORY_DOCUMENTS);
+            File CoordinateFile = new File(Environment.DIRECTORY_DCIM);
             File Coordinates = new File(CoordinateFile, "Coordinates.txt");
 
             BufferedReader Reader = new BufferedReader(new FileReader(Coordinates));

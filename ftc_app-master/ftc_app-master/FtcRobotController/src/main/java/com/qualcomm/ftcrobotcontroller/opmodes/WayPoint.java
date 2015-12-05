@@ -23,7 +23,7 @@ public class WayPoint extends CoordinateReader{
     }
 
     public int[] ConvertCoordinate(int[] Axis) {
-        int Conversion = 480 / 12; //The full length of the field in pixels/feet
+        int Conversion = 78125 / 480; //The full length of the field in pixels/feet
         int[] finalArray = new int[Axis.length];
         for (int i = 0; i < Axis.length; i++) {
             finalArray[i] = (Axis[i] * Conversion);
