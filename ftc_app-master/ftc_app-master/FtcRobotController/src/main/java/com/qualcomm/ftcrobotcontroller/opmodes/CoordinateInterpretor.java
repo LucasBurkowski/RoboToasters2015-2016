@@ -23,7 +23,7 @@ public class CoordinateInterpretor extends OpMode{
     double servoMin = 0, servoMin2 = .45;
     double servoMax = .45, servoMax2 = 0;
     double lastTurn, turn, distance;
-    int wayPointNumber = 0;
+    int wayPointNumber = 1;
     private DcMotorController DcDrive, DcDrive2, ArmDrive;//create a DcMotoController
     private DcMotor leftMotor, rightMotor, leftMotor2, rightMotor2, arm1, arm2;//objects for the left and right motors
     private AnalogInput pot;
@@ -31,6 +31,7 @@ public class CoordinateInterpretor extends OpMode{
     private ServoController servoCont;
     private Servo climberThing,climberThing2;
     WayPoint WayPoints = new WayPoint();
+    double PixelsPerInch = 23.4375;
 
     enum Mode {ResetEncoders, StartEncoders, Next, Turning, Moving}
     Mode mode;
@@ -53,6 +54,8 @@ public class CoordinateInterpretor extends OpMode{
         servoCont = hardwareMap.servoController.get("SrvCnt");
         climberThing = hardwareMap.servo.get("Srv");
         climberThing2 = hardwareMap.servo.get("Srv2");
+        rightMotor.setDirection(DcMotor.Direction.REVERSE);
+        rightMotor2.setDirection(DcMotor.Direction.REVERSE);
         leftMotor.setChannelMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
         rightMotor2.setChannelMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
         mode = Mode.ResetEncoders;
@@ -60,7 +63,7 @@ public class CoordinateInterpretor extends OpMode{
         WayPoints.GetCoordinateArray();
     }
     public void loop(){
-        getRot_Dist();
+        telemetry.addData("coordX: ", WayPoints.CoordinateX);
         switch(mode){
             case ResetEncoders:
                 setEncoderState(DcMotorController.RunMode.RESET_ENCODERS);
@@ -70,7 +73,7 @@ public class CoordinateInterpretor extends OpMode{
                 if(leftMotor.getCurrentPosition() == 0 && rightMotor2.getCurrentPosition() ==0){
                     setEncoderState(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
                     mode = Mode.Turning;
-                    getRot_Dist();
+                    getRot();
                     lTarget = -turn * turnsPerInch;
                     rTarget = turn * turnsPerInch;
                 }else{
@@ -80,7 +83,6 @@ public class CoordinateInterpretor extends OpMode{
             case Turning:
                 leftSpeed = lTarget - leftMotor.getCurrentPosition() * turnKP;
                 rightSpeed = rTarget - rightMotor2.getCurrentPosition() * turnKP;
-                limitValues();
                 runMotors();
                 if(Math.abs(lTarget - leftMotor.getCurrentPosition()) < threshold && Math.abs(rTarget - rightMotor2.getCurrentPosition()) < threshold){
                     while(leftMotor.getCurrentPosition() != 0 && rightMotor2.getCurrentPosition() != 0){
@@ -88,46 +90,67 @@ public class CoordinateInterpretor extends OpMode{
                     }
                     setEncoderState(DcMotorController.RunMode.RUN_USING_ENCODERS);
                     mode = Mode.Moving;
-                    lTarget = distance;
-                    rTarget = distance;
                 }
                 break;
             case Moving:
+                getDist();
+                lTarget = distance;
+                rTarget = distance;
                 leftSpeed = (lTarget - leftMotor.getCurrentPosition()) * turnKP;//set the proportional drivers
                 rightSpeed = (rTarget - rightMotor2.getCurrentPosition()) * turnKP;
                 runMotors();
                 if(Math.abs(lTarget - leftMotor.getCurrentPosition()) < threshold && Math.abs(rTarget - rightMotor2.getCurrentPosition()) < threshold){
                     mode = Mode.ResetEncoders;
                     wayPointNumber++;
-                    telemetry.addData("WUAYPOIENT REEEECHD!!", "Wooo0ooo0o0ooo");
+                    //telemetry.addData("WUAYPOIENT REEEECHD!!", "Wooo0ooo0o0ooo");
                 }
                 break;
             default:
                 telemetry.addData("OH POOPIES", "SOMETHING HAPPENED");
         }
-        telemetry.addData("mode:", mode);
+        //telemetry.addData("mode:", mode);
         telemetry.addData("x", WayPoints.RelativeX[1] + " " + WayPoints.RelativeX[2] + " " + WayPoints.RelativeX[3] + " " + WayPoints.RelativeX[4]);
     }
-    void getRot_Dist(){
-        double dX = WayPoints.RelativeX[1];
-        double dY = WayPoints.RelativeY[1];
-        double absoluteRotation;
-        if(dX != 0) {
-            if (dY >= 0) {
-                absoluteRotation = 0;
-            } else {
-                absoluteRotation = Math.PI;
+    void getDist(){
+        if (wayPointNumber < 50) {
+            double X1 = WayPoints.CoordinateX[wayPointNumber];
+            double Y1 = WayPoints.CoordinateY[wayPointNumber];
+            double X2 = WayPoints.CoordinateX[wayPointNumber + 1];
+            double Y2 = WayPoints.CoordinateY[wayPointNumber + 1];
+            double dX = (X2 - X1) * PixelsPerInch;
+            double dY = (Y2 - Y1) * PixelsPerInch;
+            distance = Math.sqrt(Math.pow(dX, 2) + Math.pow(dY, 2));
+        }
+    }
+    void getRot(){
+        if (wayPointNumber < 50) {
+            double X1 = WayPoints.CoordinateX[wayPointNumber];
+            double Y1 = WayPoints.CoordinateY[wayPointNumber];
+            double X2 = WayPoints.CoordinateX[wayPointNumber + 1];
+            double Y2 = WayPoints.CoordinateY[wayPointNumber + 1];
+            double dX = (X2 - X1) * PixelsPerInch;
+            double dY = (Y2 - Y1) * PixelsPerInch;
+            telemetry.addData("dx", dX + " dy: " + dY);
+            double absoluteRotation;
+            if (wayPointNumber > 0) {
+                if (dX != 0 && dY != 0) {
+                    if (dY >= 0) {
+                        absoluteRotation = 0;
+                    } else {
+                        absoluteRotation = Math.PI;
+                    }
+                } else {
+                    absoluteRotation = Math.atan2(dX, dY);
+                }
+                turn = absoluteRotation - lastTurn;
+                if (turn >= Math.PI) {
+                    turn = turn - 2 * Math.PI;
+                }
             }
-        }else{
-            absoluteRotation = Math.atan2(dX, dY);
         }
-        turn = absoluteRotation - lastTurn;
-        if(turn >= Math.PI){
-            turn = turn - 2 * Math.PI;
-        }
-        distance = Math.sqrt(Math.pow(dX, 2) + Math.pow(dY, 2));
     }
     void runMotors(){
+        limitValues();
         leftMotor.setPower(leftSpeed);
         rightMotor2.setPower(rightSpeed);
         leftMotor2.setPower(leftSpeed);
