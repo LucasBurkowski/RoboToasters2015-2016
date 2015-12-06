@@ -6,8 +6,8 @@ import com.qualcomm.robotcore.hardware.*;
 /* Created by team 8487 on 11/29/2015.
  */
 public class AutonomousMode extends OpMode{
-    double[] left = {-2000, 1000};
-    double[] right = {2000, 1000};
+    double[] left = {-1945, -978, -1196, 964,-989, -1925, -1149, 1456, -516};
+    double[] right = {1945, -978, 1196, 964, 989, -1925, 1149, 1456, 516};
 
     double leftSpeed = 0;//variables for motor speeds
     double rightSpeed = 0;
@@ -109,15 +109,15 @@ public class AutonomousMode extends OpMode{
         limitValues();//limit the values
     }
     void limitValues(){
-        if(leftSpeed > 0.7){//limit the values to 1
-            leftSpeed = 0.7;
-        }else if(leftSpeed < -0.7){
-            leftSpeed = -0.7;
+        if(leftSpeed > 0.4){//limit the values to 1
+            leftSpeed = 0.4;
+        }else if(leftSpeed < -0.4){
+            leftSpeed = -0.4;
         }
-        if(rightSpeed > 0.7){
-            rightSpeed= 0.7;
-        }else if(rightSpeed < -0.7){
-            rightSpeed = -0.7;
+        if(rightSpeed > 0.4){
+            rightSpeed= 0.4;
+        }else if(rightSpeed < -0.4){
+            rightSpeed = -0.4;
         }
     }
 }
