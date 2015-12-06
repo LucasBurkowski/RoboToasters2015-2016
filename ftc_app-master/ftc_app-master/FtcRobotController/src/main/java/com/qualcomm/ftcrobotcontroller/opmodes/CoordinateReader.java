@@ -25,10 +25,12 @@ public class CoordinateReader {
 
     public void getCoordinates() {
         //int iterator = 0;
-        CoordinateX[1] = 351;
-        CoordinateY[1] = 41;
-        CoordinateX[2] = 274;
-        CoordinateY[2] = 124;
+        CoordinateX[0] = 0;
+        CoordinateY[0] = 0;
+        CoordinateX[1] = 0;
+        CoordinateY[1] = 480;
+        //CoordinateX[2] = 200;
+        //CoordinateY[2] = 200;
         /*
         try{
             File CoordinateFile = Environment.getExternalStorageDirectory();

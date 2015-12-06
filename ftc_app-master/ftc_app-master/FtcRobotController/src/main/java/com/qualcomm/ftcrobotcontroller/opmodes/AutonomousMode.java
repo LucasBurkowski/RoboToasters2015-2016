@@ -6,26 +6,21 @@ import com.qualcomm.robotcore.hardware.*;
 /* Created by team 8487 on 11/29/2015.
  */
 public class AutonomousMode extends OpMode{
+    double[] left = {-2000, 1000};
+    double[] right = {2000, 1000};
+
     double leftSpeed = 0;//variables for motor speeds
     double rightSpeed = 0;
-    double armPower = 0;
-    double servoPos = 0;
-    double servoPos2 = 0;
-    double servoMin = 0, servoMin2 = .45;
-    double servoMax = .45, servoMax2 = 0;
-    double turnP = 0.0001, turnI = 0.00001, turnD = 0.0001;
-    double lastDiff = 0; double accum = 0;
     private DcMotorController DcDrive, DcDrive2, ArmDrive;//create a DcMotoController
     private DcMotor leftMotor, rightMotor, leftMotor2, rightMotor2, arm1, arm2;//objects for the left and right motors
-    private AnalogInput pot;
     private DeviceInterfaceModule cdi;
     private ServoController servoCont;
     private Servo climberThing,climberThing2;
 
-    enum Mode {ResetEncoders, StartEncoders, Next, Moving}
+    enum Mode {ResetEncoders, StartEncoders, Next, Moving, End}
     Mode mode;
     int moveState = 0;
-    int threshold = 10;
+    int threshold = 20;
     double kP;
     double lTarget = 0; double rTarget = 0;
     public AutonomousMode(){}
@@ -53,38 +48,32 @@ public class AutonomousMode extends OpMode{
                 setEncoderState(DcMotorController.RunMode.RESET_ENCODERS);
                 mode = Mode.StartEncoders;
                 break;
-            case StartEncoders:
-                if(Math.abs(leftMotor.getCurrentPosition()) < 30 && Math.abs(rightMotor2.getCurrentPosition()) < 30) {
-                    setEncoderState(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
+            case StartEncoders:if(Math.abs(leftMotor.getCurrentPosition()) < 30 && Math.abs(rightMotor2.getCurrentPosition()) < 30) {
+                    setEncoderState(DcMotorController.RunMode.RUN_USING_ENCODERS);
                     mode = Mode.Next;
                 }else{
                     mode = Mode.ResetEncoders;
                 }
                 break;
             case Next:
-                switch(moveState){
-                    case 0:
-                        lTarget= -10000;
-                        rTarget = 10000;
-                        kP = 0.001;
-                        threshold = 100;
-                        break;
-                    case 1:
-                        lTarget = 10000;
-                        rTarget = 10000;
-                        kP = 0.01;
-                        break;
-                    default:
-                        lTarget = 0;
-                        rTarget = 0;
-                        kP = 0;
-                        threshold = -1;
+                if(moveState < left.length) {
+                    lTarget = left[moveState];
+                    rTarget = right[moveState];
+                    if (moveState % 2 == 0) {
+                        kP = 0.0008;
+                    } else {
+                        kP = 0.004;
+                    }
+                    moveState++;
+                    mode = Mode.Moving;
+                }else{
+                    mode = Mode.End;
+                    leftSpeed = 0;
+                    rightSpeed = 0;
                 }
-                moveState++;
-                mode = Mode.Moving;
                 break;
             case Moving:
-                if(!(Math.abs(lTarget - leftMotor.getCurrentPosition()) < threshold && Math.abs(rTarget - rightMotor2.getCurrentPosition()) < threshold)) {
+                if(!(Math.abs(lTarget - leftMotor.getCurrentPosition()) < threshold && Math.abs(rTarget - rightMotor2.getCurrentPosition()) < threshold  && leftMotor.getPower() == 0 && rightMotor2.getPower() == 0)) {
                     getSpeeds();
                     telemetry.addData("oh noes-ness", Math.abs(lTarget - leftMotor.getCurrentPosition()) + Math.abs(rTarget - rightMotor.getCurrentPosition()));
                 }else{
@@ -94,7 +83,7 @@ public class AutonomousMode extends OpMode{
                 }
                 break;
             default:
-                telemetry.addData("OH NOES", "IT FAILD");
+                telemetry.addData("status", "finished");
                 break;
         }
         runMotors();
@@ -118,24 +107,17 @@ public class AutonomousMode extends OpMode{
         leftSpeed = (lTarget - leftMotor.getCurrentPosition()) * kP;//set the proportional drivers
         rightSpeed = (rTarget - rightMotor2.getCurrentPosition()) * kP;
         limitValues();//limit the values
-        /*double lRatio = lTarget / leftMotor.getCurrentPosition(); double rRatio = rTarget / rightMotor2.getCurrentPosition();//find the ratio of the target position and the current position
-        double diff = lRatio - rRatio;//find the difference in teh ratios
-        accum += diff;//add to the accumulator for the intagral value
-        double turnPIDOut = (diff) * turnP + (lastDiff - diff) * turnD + accum * turnI;//find thhe final value
-        rightSpeed += turnPIDOut;
-        leftSpeed -= turnPIDOut;
-        limitValues();//limit th values*/
     }
     void limitValues(){
-        if(leftSpeed > 1){//limit the values to 1
-            leftSpeed = 1;
-        }else if(leftSpeed < -1){
-            leftSpeed = -1;
+        if(leftSpeed > 0.7){//limit the values to 1
+            leftSpeed = 0.7;
+        }else if(leftSpeed < -0.7){
+            leftSpeed = -0.7;
         }
-        if(rightSpeed > 1){
-            rightSpeed= 1;
-        }else if(rightSpeed < -1){
-            rightSpeed = -1;
+        if(rightSpeed > 0.7){
+            rightSpeed= 0.7;
+        }else if(rightSpeed < -0.7){
+            rightSpeed = -0.7;
         }
     }
 }

@@ -33,11 +33,10 @@ public class CoordinateInterpretor extends OpMode{
     WayPoint WayPoints = new WayPoint();
     double PixelsPerInch = 23.4375;
 
-    enum Mode {ResetEncoders, StartEncoders, Next, Turning, Moving}
+    enum Mode {ResetEncoders, StartEncoders, Next, Moving, END}
     Mode mode;
-    int threshold = 10;
-    double turnKP = 0.001;
-    double straigtKP = 0.005;
+    int threshold = 20;
+    double kP = 0.005;
     double lTarget = 0; double rTarget = 0;
     public CoordinateInterpretor(){}
     public void init(){
@@ -62,72 +61,74 @@ public class CoordinateInterpretor extends OpMode{
         WayPoints.getCoordinates();
         WayPoints.GetCoordinateArray();
     }
-    public void loop(){
-        telemetry.addData("coordX: ", WayPoints.CoordinateX);
-        switch(mode){
+    public void loop() {
+        switch (mode) {
             case ResetEncoders:
                 setEncoderState(DcMotorController.RunMode.RESET_ENCODERS);
                 mode = Mode.StartEncoders;
                 break;
             case StartEncoders:
-                if(leftMotor.getCurrentPosition() == 0 && rightMotor2.getCurrentPosition() ==0){
+                if (Math.abs(leftMotor.getCurrentPosition()) < 30 && Math.abs(rightMotor2.getCurrentPosition()) < 30) {
                     setEncoderState(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
-                    mode = Mode.Turning;
-                    getRot();
-                    lTarget = -turn * turnsPerInch;
-                    rTarget = turn * turnsPerInch;
-                }else{
+                    mode = Mode.Next;
+                } else {
                     mode = Mode.ResetEncoders;
                 }
                 break;
-            case Turning:
-                leftSpeed = lTarget - leftMotor.getCurrentPosition() * turnKP;
-                rightSpeed = rTarget - rightMotor2.getCurrentPosition() * turnKP;
-                runMotors();
-                if(Math.abs(lTarget - leftMotor.getCurrentPosition()) < threshold && Math.abs(rTarget - rightMotor2.getCurrentPosition()) < threshold){
-                    while(leftMotor.getCurrentPosition() != 0 && rightMotor2.getCurrentPosition() != 0){
-                        setEncoderState(DcMotorController.RunMode.RESET_ENCODERS);
-                    }
-                    setEncoderState(DcMotorController.RunMode.RUN_USING_ENCODERS);
-                    mode = Mode.Moving;
+            case Next:
+                if(wayPointNumber % 2 ==0){
+                    getDist(wayPointNumber);
+                    lTarget = distance;
+                    rTarget = distance;
+                }else{
+                    getRot(wayPointNumber);
+                    lTarget = 0;
+                    rTarget = 0;
                 }
+                lTarget = WayPoints.CoordinateX[wayPointNumber];
+                rTarget = WayPoints.CoordinateY[wayPointNumber];
+                leftSpeed = 0;
+                rightSpeed = 0;
+                if(wayPointNumber < 49) {
+                    wayPointNumber++;
+                    mode = Mode.Moving;
+                }else{mode = Mode.END;}
                 break;
             case Moving:
-                getDist();
-                lTarget = distance;
-                rTarget = distance;
-                leftSpeed = (lTarget - leftMotor.getCurrentPosition()) * turnKP;//set the proportional drivers
-                rightSpeed = (rTarget - rightMotor2.getCurrentPosition()) * turnKP;
-                runMotors();
-                if(Math.abs(lTarget - leftMotor.getCurrentPosition()) < threshold && Math.abs(rTarget - rightMotor2.getCurrentPosition()) < threshold){
+                if (!(Math.abs(lTarget - leftMotor.getCurrentPosition()) < threshold && Math.abs(rTarget - rightMotor2.getCurrentPosition()) < threshold)) {
+                    getSpeeds();
+                    telemetry.addData("oh noes-ness", Math.abs(lTarget - leftMotor.getCurrentPosition()) + Math.abs(rTarget - rightMotor.getCurrentPosition()));
+                } else {
                     mode = Mode.ResetEncoders;
-                    wayPointNumber++;
-                    //telemetry.addData("WUAYPOIENT REEEECHD!!", "Wooo0ooo0o0ooo");
+                    leftSpeed = 0;
+                    rightSpeed = 0;
                 }
                 break;
             default:
-                telemetry.addData("OH POOPIES", "SOMETHING HAPPENED");
+                telemetry.addData("OH NOES", "IT FAILD");
+                break;
         }
-        //telemetry.addData("mode:", mode);
-        telemetry.addData("x", WayPoints.RelativeX[1] + " " + WayPoints.RelativeX[2] + " " + WayPoints.RelativeX[3] + " " + WayPoints.RelativeX[4]);
+        runMotors();
+        telemetry.addData("mode", mode);
     }
-    void getDist(){
-        if (wayPointNumber < 50) {
-            double X1 = WayPoints.CoordinateX[wayPointNumber];
-            double Y1 = WayPoints.CoordinateY[wayPointNumber];
-            double X2 = WayPoints.CoordinateX[wayPointNumber + 1];
-            double Y2 = WayPoints.CoordinateY[wayPointNumber + 1];
+    void getDist(int num){
+        if (wayPointNumber < 49) {
+            double X1 = WayPoints.CoordinateX[num];
+            double Y1 = WayPoints.CoordinateY[num];
+            double X2 = WayPoints.CoordinateX[num + 1];
+            double Y2 = WayPoints.CoordinateY[num + 1];
             double dX = (X2 - X1) * PixelsPerInch;
             double dY = (Y2 - Y1) * PixelsPerInch;
             distance = Math.sqrt(Math.pow(dX, 2) + Math.pow(dY, 2));
+            distance = distance * PixelsPerInch;
         }
     }
-    void getRot(){
-        if (wayPointNumber < 50) {
-            double X1 = WayPoints.CoordinateX[wayPointNumber];
-            double Y1 = WayPoints.CoordinateY[wayPointNumber];
-            double X2 = WayPoints.CoordinateX[wayPointNumber + 1];
-            double Y2 = WayPoints.CoordinateY[wayPointNumber + 1];
+    void getRot(int num){
+        if (wayPointNumber < 49) {
+            double X1 = WayPoints.CoordinateX[num];
+            double Y1 = WayPoints.CoordinateY[num];
+            double X2 = WayPoints.CoordinateX[num + 1];
+            double Y2 = WayPoints.CoordinateY[num + 1];
             double dX = (X2 - X1) * PixelsPerInch;
             double dY = (Y2 - Y1) * PixelsPerInch;
             telemetry.addData("dx", dX + " dy: " + dY);
@@ -159,6 +160,11 @@ public class CoordinateInterpretor extends OpMode{
     void setEncoderState(DcMotorController.RunMode r){
         leftMotor.setChannelMode(r);
         rightMotor2.setChannelMode(r);
+    }
+    void getSpeeds(){//calculate the motor speeeds
+        leftSpeed = (lTarget - leftMotor.getCurrentPosition()) * kP;//set the proportional drivers
+        rightSpeed = (rTarget - rightMotor2.getCurrentPosition()) * kP;
+        limitValues();//limit the values
     }
     void limitValues(){
         if(leftSpeed > 1){//limit the values to 1
