@@ -31,6 +31,8 @@ public class TankDrive extends OpMode{
     int potVolt = 0;
     double servoPos = 0;
     double servoPos2 = 0;
+    double servoPos3 = 0;
+    double servoPos4 = 0;
     double servoMin = 0, servoMin2 = .65;
     double servoMax = .8, servoMax2 = 0;
     int servoDeb = 30;
@@ -39,7 +41,7 @@ public class TankDrive extends OpMode{
     private AnalogInput pot;
     private DeviceInterfaceModule cdi;
     private ServoController servoCont;
-    private Servo climberThing,climberThing2;
+    private Servo climberThing,climberThing2,plow,plow2;
 
     public TankDrive(){}//constructor
 
@@ -60,6 +62,8 @@ public class TankDrive extends OpMode{
         servoCont = hardwareMap.servoController.get("SrvCnt");
         climberThing = hardwareMap.servo.get("Srv");
         climberThing2 = hardwareMap.servo.get("Srv2");
+        plow = hardwareMap.servo.get("Srv3");
+        plow2 = hardwareMap.servo.get("Srv4");
         servoPos = servoMax;
         servoPos2 = servoMax2;
 
@@ -94,7 +98,16 @@ public class TankDrive extends OpMode{
             servoDeb = 0;
             servoPos2 = servoMax2;
         }
+        if (gamepad2.a){
+            servoPos3 = 106;
+            servoPos4 = 106;
+        }
+        if (gamepad2.b){
+            servoPos3 =0;
+            servoPos4 =0;
+        }
         servoDeb++;//servo debounce-- stops the servo variable from rapidly changing back and forth between up and down.
+
     }
     void setMotors(){
         leftMotor2.setPower(leftSpeed);// set the motors to the powers
@@ -105,6 +118,8 @@ public class TankDrive extends OpMode{
         //rightMotor.setTargetPosition((int)Math.round((rightMotor.getTargetPosition() + targetMult * rightSpeed) + (rightMotor.getCurrentPosition())/ 2));
         climberThing.setPosition(servoPos);
         climberThing2.setPosition(servoPos2);
+        plow.setPosition(servoPos3);
+        plow2.setPosition(servoPos4);
 
         //if((potVolt >= maxSpool && armPower >= 0) || (potVolt <= minSpool && armPower <= 0)){//If the arm is being moved ot of it range, dont move it.
             //arm1.setPower(0);
