@@ -10,23 +10,26 @@ import com.qualcomm.robotcore.hardware.ServoController;
 /* Created by team 8487 on 11/29/2015.
  */
 public class AutonomousMode extends OpMode {
-    double[] left = {-1945, -978, -1196, 964,-989, -1925, -1149, 1456, -516};
-    double[] right = {1945, -978, 1196, 964, 989, -1925, 1149, 1456, 516};
-
+    double[] dists = {-6251, 3513, -3513, -1000};
+    double[] turns = {3.14, 3.14, 3.14, 3.14};
+    float startAngle;
     double leftSpeed = 0;//variables for motor speeds
     double rightSpeed = 0;
+    double target;
     private DcMotorController DcDrive, DcDrive2, ArmDrive;//create a DcMotoController
     private DcMotor leftMotor, rightMotor, leftMotor2, rightMotor2, arm1, arm2;//objects for the left and right motors
     private DeviceInterfaceModule cdi;
     private ServoController servoCont;
     private Servo climberThing,climberThing2;
-
-    enum Mode {ResetEncoders, StartEncoders, Next, Moving, End}
+    //private I2cDevice gyro;
+    //private IBNO055IMU imu;
+    private Servo plow;
+    private Servo plow2;
+    enum Mode {ResetEncoders, StartEncoders, Next, Moving, Turning, End}
     Mode mode;
     int moveState = 0;
     int threshold = 20;
     double kP;
-    double lTarget = 0; double rTarget = 0;
     public AutonomousMode(){}
     public void init(){
         DcDrive = hardwareMap.dcMotorController.get("drive_controller");//find the motor controller on the robot
@@ -45,45 +48,69 @@ public class AutonomousMode extends OpMode {
         leftMotor.setChannelMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
         rightMotor2.setChannelMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
         mode = Mode.ResetEncoders;
+        plow = hardwareMap.servo.get("Srv3");
+        plow2 = hardwareMap.servo.get("Srv4");
+        //gyro = hardwareMap.i2cDevice.get("Gyro");
+        //imu = ClassFactory.createAdaFruitBNO055IMU(AutonomousMode.this, gyro);
+        //startAngle = (float) imu.getAngularOrientation().heading;
     }
     public void loop(){
-        switch(mode){
+        //float angle = (float) imu.getAngularOrientation().heading - startAngle;
+        float angle = (float) 3.14;
+        switch(mode) {
             case ResetEncoders:
                 setEncoderState(DcMotorController.RunMode.RESET_ENCODERS);
                 mode = Mode.StartEncoders;
+                plow.setPosition(0.22);
+                plow2.setPosition(0.74);
                 break;
-            case StartEncoders:if(Math.abs(leftMotor.getCurrentPosition()) < 30 && Math.abs(rightMotor2.getCurrentPosition()) < 30) {
+            case StartEncoders:
+                if (Math.abs(leftMotor.getCurrentPosition()) < 30 && Math.abs(rightMotor2.getCurrentPosition()) < 30) {
                     setEncoderState(DcMotorController.RunMode.RUN_USING_ENCODERS);
                     mode = Mode.Next;
-                }else{
+                } else {
                     mode = Mode.ResetEncoders;
                 }
                 break;
             case Next:
-                if(moveState < left.length) {
-                    lTarget = left[moveState];
-                    rTarget = right[moveState];
+                if (moveState < dists.length * 2) {
                     if (moveState % 2 == 0) {
                         kP = 0.0008;
+                        target = dists[moveState / 2];
+                        mode = Mode.Moving;
                     } else {
-                        kP = 0.004;
+                        kP = 1;
+                        mode = Mode.Turning;
+                        target = turns[(moveState - 1) / 2];
                     }
                     moveState++;
-                    mode = Mode.Moving;
-                }else{
+                } else {
                     mode = Mode.End;
                     leftSpeed = 0;
                     rightSpeed = 0;
                 }
                 break;
             case Moving:
-                if(!(Math.abs(lTarget - leftMotor.getCurrentPosition()) < threshold && Math.abs(rTarget - rightMotor2.getCurrentPosition()) < threshold  && leftMotor.getPower() == 0 && rightMotor2.getPower() == 0)) {
+                if (!(Math.abs(-target - leftMotor.getCurrentPosition()) < threshold && Math.abs(target - rightMotor2.getCurrentPosition()) < threshold && leftMotor.getPower() == 0 && rightMotor2.getPower() == 0)) {
                     getSpeeds();
-                    telemetry.addData("oh noes-ness", Math.abs(lTarget - leftMotor.getCurrentPosition()) + Math.abs(rTarget - rightMotor.getCurrentPosition()));
-                }else{
+                    telemetry.addData("oh noes-ness", Math.abs(target - leftMotor.getCurrentPosition()) + Math.abs(target - rightMotor.getCurrentPosition()));
+                } else {
                     mode = Mode.ResetEncoders;
                     leftSpeed = 0;
                     rightSpeed = 0;
+                }
+                break;
+            case Turning:
+                if(angle - target < Math.PI){
+                    leftSpeed = -kP * (angle - target);
+                    rightSpeed = -kP * (angle - target);
+                }else {
+                    leftSpeed = kP * (angle - target);
+                    rightSpeed = kP * (angle - target);
+                }
+                limitValues();
+                if (Math.abs(target - angle) < 0.05){
+                    mode = Mode.ResetEncoders;
                 }
                 break;
             default:
@@ -93,7 +120,7 @@ public class AutonomousMode extends OpMode {
         runMotors();
         telemetry.addData("lPow", rightSpeed);
         telemetry.addData("lPos", rightMotor2.getCurrentPosition());
-        telemetry.addData("diff", rTarget - rightMotor2.getCurrentPosition());
+        telemetry.addData("diff", target - rightMotor2.getCurrentPosition());
         telemetry.addData("mode", mode + " " + moveState);
     }
     void runMotors(){
@@ -108,20 +135,21 @@ public class AutonomousMode extends OpMode {
         rightMotor2.setChannelMode(r);
     }
     void getSpeeds(){//calculate the motor speeeds
-        leftSpeed = (lTarget - leftMotor.getCurrentPosition()) * kP;//set the proportional drivers
-        rightSpeed = (rTarget - rightMotor2.getCurrentPosition()) * kP;
+        leftSpeed = (-target - leftMotor.getCurrentPosition()) * kP;//set the proportional drivers
+        rightSpeed = (target - rightMotor2.getCurrentPosition()) * kP;
         limitValues();//limit the values
     }
     void limitValues(){
-        if(leftSpeed > 0.4){//limit the values to 1
-            leftSpeed = 0.4;
-        }else if(leftSpeed < -0.4){
-            leftSpeed = -0.4;
+        if(leftSpeed > 0.3){//limit the values to 1
+            leftSpeed = 0.3;
+        }else if(leftSpeed < -0.3){
+            leftSpeed = -0.3;
         }
-        if(rightSpeed > 0.4){
-            rightSpeed= 0.4;
-        }else if(rightSpeed < -0.4){
-            rightSpeed = -0.4;
+        if(rightSpeed > 0.3){
+            rightSpeed= 0.3;
+        }else if(rightSpeed < -0.3){
+            rightSpeed = -0.3;
         }
     }
+
 }

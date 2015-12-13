@@ -5,12 +5,9 @@ import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
-import com.qualcomm.robotcore.hardware.I2cDevice;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoController;
 import com.qualcomm.robotcore.util.Range;
-
-import org.swerverobotics.library.interfaces.IBNO055IMU;
 
 /**
  * Created by team 8487 on 11/8/2015.
@@ -38,8 +35,8 @@ public class TankDrive extends OpMode {
     private DeviceInterfaceModule cdi;
     private ServoController servoCont;
     private Servo climberThing,climberThing2,plow,plow2;
-    private I2cDevice gyro;
-    private IBNO055IMU.Parameters parameters;
+    //private I2cDevice gyro;
+    //private IBNO055IMU imu;
     public TankDrive(){}//constructor
 
     public void init(){//initializtion method, runs once at the beginning
@@ -63,14 +60,17 @@ public class TankDrive extends OpMode {
         plow2 = hardwareMap.servo.get("Srv4");
         servoPos = servoMax;
         servoPos2 = servoMax2;
-        //gyro = ClassFactory.createAdaFruitBNO055IMU(gyro, parameters);
-
+        //gyro = hardwareMap.i2cDevice.get("Gyro");
+        //imu = ClassFactory.createAdaFruitBNO055IMU(TankDrive.this, gyro);
     }
     public void loop() {
         /*this section is the program that will continuously run while the robot is driving.*/
         getInputs();
         mix();
         setMotors();
+        //float angle = (float) imu.getAngularOrientation().heading;
+        float angle = (float) 3.14;
+        telemetry.addData("Angle", angle);
     }
     public void stop(){}
 
