@@ -14,15 +14,14 @@ import org.swerverobotics.library.interfaces.IBNO055IMU;
 /* Created by team 8487 on 11/29/2015.
  */
 public class AutonomousMode extends OpMode {
-    double[] dists = {-6251, 3513, -3513, 2000};
-    double[] turns = {0,0,1.6,1.6};
+    double[] dists = {-5151, 3513, -3513, -1000};
+    double[] turns = {0,0,0,0};
     float startAngle;
     double leftSpeed = 0;//variables for motor speeds
     double rightSpeed = 0;
     double target = 0;
     double lastTarget = 0;
     double integral;
-    double kI = 0.0;
     private DcMotorController DcDrive, DcDrive2, ArmDrive;//create a DcMotoController
     private DcMotor leftMotor, rightMotor, leftMotor2, rightMotor2, arm1, arm2;//objects for the left and right motors
     private DeviceInterfaceModule cdi;
@@ -35,9 +34,8 @@ public class AutonomousMode extends OpMode {
     enum Mode {ResetEncoders, StartEncoders, Next, Moving, Turning, End}
     Mode mode;
     int moveState = 0;
-    int threshold = 20;
+    int threshold = 10;
     double kP;
-    double alignKP = 0.5;
     public AutonomousMode(){}
     public void init(){
         DcDrive = hardwareMap.dcMotorController.get("drive_controller");//find the motor controller on the robot
@@ -58,9 +56,13 @@ public class AutonomousMode extends OpMode {
         mode = Mode.ResetEncoders;
         plow = hardwareMap.servo.get("Srv3");
         plow2 = hardwareMap.servo.get("Srv4");
+        climberThing.setPosition(0.8);
+        climberThing2.setPosition(0);
         gyro = hardwareMap.i2cDevice.get("Gyro");
         imu = ClassFactory.createAdaFruitBNO055IMU(AutonomousMode.this, gyro);
         startAngle = (float) imu.getAngularOrientation().heading;
+        plow.setPosition(0.22);
+        plow2.setPosition(0.74);
     }
     public void loop(){
         float angle = (float) imu.getAngularOrientation().heading - startAngle;
@@ -69,8 +71,6 @@ public class AutonomousMode extends OpMode {
             case ResetEncoders:
                 setEncoderState(DcMotorController.RunMode.RESET_ENCODERS);
                 mode = Mode.StartEncoders;
-                plow.setPosition(0.22);
-                plow2.setPosition(0.74);
                 break;
             case StartEncoders:
                 if (Math.abs(leftMotor.getCurrentPosition()) < 30 && Math.abs(rightMotor2.getCurrentPosition()) < 30) {
@@ -88,10 +88,26 @@ public class AutonomousMode extends OpMode {
                         target = dists[moveState / 2];
                         mode = Mode.Moving;
                     } else {
-                        kP = 2.5;
+                        kP = 8;
                         mode = Mode.Turning;
                         integral = 0;
                         target = turns[(moveState - 1) / 2];
+                    }
+                    switch(moveState){
+                        case 1:
+                            plow.setPosition(1);
+                            plow2.setPosition(0);
+                            break;
+                        case 3:
+                            plow.setPosition(0.22);
+                            plow2.setPosition(0.74);
+                            break;
+                        case 5:
+                            plow.setPosition(1);
+                            plow2.setPosition(0);
+                            break;
+                        default:
+                            break;
                     }
                     moveState++;
                 } else {
@@ -114,16 +130,12 @@ public class AutonomousMode extends OpMode {
                 if(Math.abs(angle - target) < Math.abs(angle - (target - Math.PI * 2))){
                     leftSpeed  = kP * (angle - target);
                     rightSpeed = kP * (angle - target);
-                    //integral += angle - target;
                 }else{
                     leftSpeed  = kP * (angle - (target - Math.PI * 2));
                     rightSpeed = kP * (angle - (target - Math.PI * 2));
-                    //integral += angle - (target - Math.PI * 2);
                 }
-                //leftSpeed += integral * kI;
-                //rightSpeed += integral * kI;
                 limitValues();
-                if (Math.abs(target - angle) < 0.05){
+                if (Math.abs(target - angle) < 0.1){
                     mode = Mode.ResetEncoders;
                 }
                 break;
@@ -152,14 +164,6 @@ public class AutonomousMode extends OpMode {
         leftSpeed = (-target - leftMotor.getCurrentPosition()) * kP;//set the proportional drivers
         rightSpeed = (target - rightMotor2.getCurrentPosition()) * kP;
         limitValues();//limit the values
-        /*if(Math.abs(angle - target) < Math.abs(angle - (target - Math.PI * 2))){
-            leftSpeed  += alignKP * (angle - lastTarget);
-            rightSpeed += alignKP * (angle - lastTarget);
-        }else{
-            leftSpeed  += alignKP * (angle - (lastTarget - Math.PI * 2));
-            rightSpeed += alignKP * (angle - (lastTarget - Math.PI * 2));
-        }*/
-        limitValues();
     }
     void limitValues(){
         if(leftSpeed > 0.3){//limit the values to 1
