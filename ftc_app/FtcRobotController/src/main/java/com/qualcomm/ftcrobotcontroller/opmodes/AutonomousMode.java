@@ -61,8 +61,8 @@ public class AutonomousMode extends OpMode {
         gyro = hardwareMap.i2cDevice.get("Gyro");
         imu = ClassFactory.createAdaFruitBNO055IMU(AutonomousMode.this, gyro);
         startAngle = (float) imu.getAngularOrientation().heading;
-        plow.setPosition(0.22);
-        plow2.setPosition(0.74);
+        plow.setPosition(1);
+        plow2.setPosition(0);
     }
     public void loop(){
         float angle = (float) imu.getAngularOrientation().heading - startAngle;
@@ -90,10 +90,14 @@ public class AutonomousMode extends OpMode {
                     } else {
                         kP = 8;
                         mode = Mode.Turning;
-                        integral = 0;
+                        //integral = 0;
                         target = turns[(moveState - 1) / 2];
                     }
                     switch(moveState){
+                        case 0:
+                            plow.setPosition(0.22);
+                            plow2.setPosition(0.74);
+                            break;
                         case 1:
                             plow.setPosition(1);
                             plow2.setPosition(0);
@@ -135,17 +139,16 @@ public class AutonomousMode extends OpMode {
                     rightSpeed = kP * (angle - (target - Math.PI * 2));
                 }
                 limitValues();
-                if (Math.abs(target - angle) < 0.1){
+                if (Math.abs(target - angle) < 0.1 || Math.abs(angle - (target - Math.PI * 2)) < 0.1){
                     mode = Mode.ResetEncoders;
                 }
-                break;
+                 break;
             default:
                 telemetry.addData("status", "finished");
                 break;
         }
         runMotors();
-        telemetry.addData("lPow", rightSpeed);
-        telemetry.addData("lPos", rightMotor2.getCurrentPosition());
+        telemetry.addData("angle", angle);
         telemetry.addData("diff", target - rightMotor2.getCurrentPosition());
         telemetry.addData("mode", mode + " " + moveState);
     }
