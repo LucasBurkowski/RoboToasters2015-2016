@@ -20,6 +20,9 @@ public class TankDrive extends OpMode {
 
     //double targetMult  = 1;
 
+    double plowPos = 0;
+    double plowCurrent = 0;
+
     double leftSpeed = 0;//variables for motor speeds
     double rightSpeed = 0;
     double turnExpo = 1.5;
@@ -65,16 +68,17 @@ public class TankDrive extends OpMode {
         servoPos = servoMax;
         servoPos2 = servoMax2;
         gyro = hardwareMap.i2cDevice.get("Gyro");
-        imu = ClassFactory.createAdaFruitBNO055IMU(TankDrive.this, gyro);
+        //imu = ClassFactory.createAdaFruitBNO055IMU(TankDrive.this, gyro);
+        setEncoderState(DcMotorController.RunMode.RUN_USING_ENCODERS);
     }
     public void loop() {
         /*this section is the program that will continuously run while the robot is driving.*/
         getInputs();
         mix();
         setMotors();
-        float angle = (float) imu.getAngularOrientation().heading;
+        //float angle = (float) imu.getAngularOrientation().heading;
         //float angle = (float) 3.14;
-        telemetry.addData("Angle", angle);
+        //telemetry.addData("Angle", angle);
     }
     public void stop(){}
 
@@ -101,23 +105,34 @@ public class TankDrive extends OpMode {
             servoPos2 = servoMax2;
         }
         if (gamepad2.a){
-            servoPos3 = 0.22;
-            servoPos4 = 0.74;
+            plowPos = 1;
         }
         if (gamepad2.b){
-            servoPos3 = 1;
-            servoPos4 = 0;
+            plowPos = 0;
+        }
+        if(Math.abs(plowCurrent - plowPos) > 1E-6){//since the math isn't exact sometimes, just get close
+            if(plowCurrent > plowPos){
+                plowCurrent -= 0.01;
+            }else{
+                plowCurrent += 0.01;
+            }
+        }else{//make it exact
+            plowCurrent = plowPos;
+        }
+        telemetry.addData("plowPos", plowCurrent);
+        servoPos3 = Range.clip(lerp(1, 0.22, plowCurrent), 0, 1);
+        servoPos4 = Range.clip(lerp(0, 0.74, plowCurrent), 0, 1);
+        if(gamepad1.left_stick_button && gamepad1.right_stick_button){//enable/disable encoders for teleop running
+           setEncoderState(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
         }
         servoDeb++;//servo debounce-- stops the servo variable from rapidly changing back and forth between up and down.
-
+        telemetry.addData("encoders", leftMotor.getChannelMode());
     }
     void setMotors(){
         leftMotor2.setPower(leftSpeed);// set the motors to the powers
         leftMotor.setPower(leftSpeed);
-        //leftMotor.setTargetPosition((int)Math.round((leftMotor.getTargetPosition() + targetMult * leftSpeed)+(leftMotor.getCurrentPosition())/ 2));//set the motor to a target position that's the average of the current and the target position.
         rightMotor2.setPower(rightSpeed);
         rightMotor.setPower(rightSpeed);
-        //rightMotor.setTargetPosition((int)Math.round((rightMotor.getTargetPosition() + targetMult * rightSpeed) + (rightMotor.getCurrentPosition())/ 2));
         climberThing.setPosition(servoPos);
         climberThing2.setPosition(servoPos2);
         plow.setPosition(servoPos3);
@@ -130,6 +145,10 @@ public class TankDrive extends OpMode {
             arm1.setPower(armPower);
             arm2.setPower(armPower);
        // }
+    }
+    void setEncoderState(DcMotorController.RunMode r){
+        leftMotor.setChannelMode(r);
+        rightMotor2.setChannelMode(r);
     }
     void mix(){
         /*this mixing algorithm works by doing the following:
@@ -145,6 +164,11 @@ public class TankDrive extends OpMode {
         left = Range.clip(left, -1, 1);//clip the range of the inputs to be within -1 and 1
         right = Range.clip(right, -1, 1);
         leftSpeed = left; rightSpeed = right;//set the speeds
+    }
+    double lerp(double pos1, double pos2, double amount) {
+        double difference = pos2 - pos1;
+        difference *= amount;
+        return(pos1 + difference);
     }
     double expo(double in, double amount){
         if (in > 0){

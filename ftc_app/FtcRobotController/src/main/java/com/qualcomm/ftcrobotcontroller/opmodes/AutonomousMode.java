@@ -15,13 +15,12 @@ import org.swerverobotics.library.interfaces.IBNO055IMU;
  */
 public class AutonomousMode extends OpMode {
     double[] dists = {-5151, 3513, -3513, -1000};
-    double[] turns = {0,0,0,0};
+    double[] turns = {0,0,Math.PI / 2,0};
     float startAngle;
     double leftSpeed = 0;//variables for motor speeds
     double rightSpeed = 0;
     double target = 0;
     double lastTarget = 0;
-    double integral;
     private DcMotorController DcDrive, DcDrive2, ArmDrive;//create a DcMotoController
     private DcMotor leftMotor, rightMotor, leftMotor2, rightMotor2, arm1, arm2;//objects for the left and right motors
     private DeviceInterfaceModule cdi;
@@ -91,7 +90,7 @@ public class AutonomousMode extends OpMode {
                         kP = 8;
                         mode = Mode.Turning;
                         //integral = 0;
-                        target = turns[(moveState - 1) / 2];
+                        target = (turns[(moveState - 1) / 2] + Math.PI * 2) % (Math.PI * 2);//set the target, use remainder calculation to make it positive.
                     }
                     switch(moveState){
                         case 0:
