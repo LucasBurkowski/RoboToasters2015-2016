@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoController;
 
 import org.swerverobotics.library.ClassFactory;
+import org.swerverobotics.library.exceptions.UnexpectedI2CDeviceException;
 import org.swerverobotics.library.interfaces.IBNO055IMU;
 
 /* Created by team 8487 on 11/29/2015.
@@ -30,6 +31,8 @@ public class AutonomousMode extends OpMode {
     private IBNO055IMU imu;
     private Servo plow;
     private Servo plow2;
+    boolean gyroActive=true;
+    float angle;
     enum Mode {ResetEncoders, StartEncoders, Next, Moving, Turning, End}
     Mode mode;
     int moveState = 0;
@@ -57,14 +60,26 @@ public class AutonomousMode extends OpMode {
         plow2 = hardwareMap.servo.get("Srv4");
         climberThing.setPosition(0.8);
         climberThing2.setPosition(0);
-        gyro = hardwareMap.i2cDevice.get("Gyro");
-        imu = ClassFactory.createAdaFruitBNO055IMU(AutonomousMode.this, gyro);
-        startAngle = (float) imu.getAngularOrientation().heading;
+        try {
+            gyro = hardwareMap.i2cDevice.get("Gyro");
+            imu = ClassFactory.createAdaFruitBNO055IMU(AutonomousMode.this, gyro);
+        }catch (UnexpectedI2CDeviceException e){
+          gyroActive=false;
+        }
+        if(gyroActive){
+            startAngle = (float) imu.getAngularOrientation().heading;
+        }else{
+            startAngle = 0;
+        }
         plow.setPosition(1);
         plow2.setPosition(0);
     }
     public void loop(){
-        float angle = (float) imu.getAngularOrientation().heading - startAngle;
+        if(gyroActive) {
+            angle = (float) imu.getAngularOrientation().heading - startAngle;
+        }else{
+            angle = 0;
+        }
         //float angle = (float) 3.14;
         switch(mode) {
             case ResetEncoders:
@@ -87,10 +102,14 @@ public class AutonomousMode extends OpMode {
                         target = dists[moveState / 2];
                         mode = Mode.Moving;
                     } else {
-                        kP = 8;
-                        mode = Mode.Turning;
-                        //integral = 0;
-                        target = (turns[(moveState - 1) / 2] + Math.PI * 2) % (Math.PI * 2);//set the target, use remainder calculation to make it positive.
+                        if(gyroActive) {
+                            kP = 8;
+                            mode = Mode.Turning;
+                            //integral = 0;
+                            target = (turns[(moveState - 1) / 2] + Math.PI * 2) % (Math.PI * 2);//set the target, use remainder calculation to make it positive.
+                        } else {
+                            mode = Mode.Next;
+                        }
                     }
                     switch(moveState){
                         case 0:
@@ -143,7 +162,12 @@ public class AutonomousMode extends OpMode {
                 }
                  break;
             default:
-                telemetry.addData("status", "finished");
+                telemetry.addData("",
+                        "       ,,,,,\n" +
+                        "      _|||||_\n" +
+                        "     {~*~*~*~}\n" +
+                        "   __{*~*~*~*}__\n" +
+                        "  `-------------`");
                 break;
         }
         runMotors();
@@ -181,3 +205,22 @@ public class AutonomousMode extends OpMode {
     }
 
 }
+//the cake is a lie
+//the cake is a lie
+//the cake is a lie
+//the cake is a lie
+//the cake is t rue
+//the cake is a lie
+//the cake is a lie
+//the cake is a lie
+//the cake is a lie
+
+
+
+
+
+//         ,,,,,
+//        _|||||_
+//       {~*~*~*~}
+//     __{*~*~*~*}__
+//    `-------------`
