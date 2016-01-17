@@ -10,11 +10,13 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoController;
 import com.qualcomm.robotcore.util.Range;
 
-import org.swerverobotics.library.ClassFactory;
 import org.swerverobotics.library.interfaces.IBNO055IMU;
 
 /**
  * Created by team 8487 on 11/8/2015.
+ * //
+ *
+ *
 */
 public class TankDrive extends OpMode {
 
@@ -33,6 +35,8 @@ public class TankDrive extends OpMode {
     double servoPos2 = 0;
     double servoPos3 = 1;
     double servoPos4 = 0;
+    double servoPos5 = 0;
+    double servoPos6 = 1;
     double servoMin = 0, servoMin2 = .65;
     double servoMax = .8, servoMax2 = 0;
     int servoDeb = 30;
@@ -41,7 +45,7 @@ public class TankDrive extends OpMode {
     private AnalogInput pot;
     private DeviceInterfaceModule cdi;
     private ServoController servoCont;
-    private Servo climberThing,climberThing2,plow,plow2;
+    private Servo climberThing,climberThing2,plow,plow2,allclear,allclear2;
     private I2cDevice gyro;
     private IBNO055IMU imu;
     public TankDrive(){}//constructor
@@ -65,6 +69,8 @@ public class TankDrive extends OpMode {
         climberThing2 = hardwareMap.servo.get("Srv2");
         plow = hardwareMap.servo.get("Srv3");
         plow2 = hardwareMap.servo.get("Srv4");
+        allclear = hardwareMap.servo.get("Srv5");
+        allclear2 = hardwareMap.servo.get("Srv6");
         servoPos = servoMax;
         servoPos2 = servoMax2;
         gyro = hardwareMap.i2cDevice.get("Gyro");
@@ -110,6 +116,14 @@ public class TankDrive extends OpMode {
         if (gamepad2.b){
             plowPos = 0;
         }
+        if (gamepad2.y && plowPos != 1){
+            servoPos5 = 0;
+            servoPos6 = 1;
+        }
+        if (gamepad2.x && plowPos != 1){
+            servoPos5 = 1;
+            servoPos6 = 0;
+        }
         if(Math.abs(plowCurrent - plowPos) > 1E-6){//since the math isn't exact sometimes, just get close
             if(plowCurrent > plowPos){
                 plowCurrent -= 0.01;
@@ -137,6 +151,8 @@ public class TankDrive extends OpMode {
         climberThing2.setPosition(servoPos2);
         plow.setPosition(servoPos3);
         plow2.setPosition(servoPos4);
+        allclear.setPosition(servoPos5);
+        allclear2.setPosition(servoPos6);
 
         //if((potVolt >= maxSpool && armPower >= 0) || (potVolt <= minSpool && armPower <= 0)){//If the arm is being moved ot of it range, dont move it.
             //arm1.setPower(0);

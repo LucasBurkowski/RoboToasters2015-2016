@@ -14,9 +14,9 @@ import org.swerverobotics.library.interfaces.IBNO055IMU;
 
 /* Created by team 8487 on 11/29/2015.
  */
-public class AutonomousMode extends OpMode {
-    double[] dists = {-5151, 3513, -3513, -1000};
-    double[] turns = {0,0,Math.PI / 2,0};
+public class ClimberDump extends OpMode {
+    double[] dists = {-9200};
+    double[] turns = {Math.PI};
     float startAngle;
     double leftSpeed = 0;//variables for motor speeds
     double rightSpeed = 0;
@@ -38,7 +38,7 @@ public class AutonomousMode extends OpMode {
     int moveState = 0;
     int threshold = 10;
     double kP;
-    public AutonomousMode(){}
+    public ClimberDump(){}
     public void init(){
         DcDrive = hardwareMap.dcMotorController.get("drive_controller");//find the motor controller on the robot
         DcDrive2 = hardwareMap.dcMotorController.get("drive_controller2");//find the motor controller on the robot
@@ -66,9 +66,9 @@ public class AutonomousMode extends OpMode {
         allclear2.setPosition(1);
         try {
             gyro = hardwareMap.i2cDevice.get("Gyro");
-            imu = ClassFactory.createAdaFruitBNO055IMU(AutonomousMode.this, gyro);
+            imu = ClassFactory.createAdaFruitBNO055IMU(ClimberDump.this, gyro);
         }catch (UnexpectedI2CDeviceException e){
-          gyroActive=false;
+            gyroActive=false;
         }
         if(gyroActive){
             startAngle = (float) imu.getAngularOrientation().heading;
@@ -120,6 +120,8 @@ public class AutonomousMode extends OpMode {
                         case 0:
                             plow.setPosition(0.22);
                             plow2.setPosition(0.74);
+                            allclear.setPosition(1);
+                            allclear2.setPosition(0);
                             break;
                         case 1:
                             plow.setPosition(1);
@@ -165,14 +167,14 @@ public class AutonomousMode extends OpMode {
                 if (Math.abs(target - angle) < 0.1 || Math.abs(angle - (target - Math.PI * 2)) < 0.1){
                     mode = Mode.ResetEncoders;
                 }
-                 break;
+                break;
             default:
                 telemetry.addData("",
                         "       ,,,,,\n" +
-                        "      _|||||_\n" +
-                        "     {~*~*~*~}\n" +
-                        "   __{*~*~*~*}__\n" +
-                        "  `-------------`");
+                                "      _|||||_\n" +
+                                "     {~*~*~*~}\n" +
+                                "   __{*~*~*~*}__\n" +
+                                "  `-------------`");
                 break;
         }
         runMotors();
@@ -228,4 +230,3 @@ public class AutonomousMode extends OpMode {
 //        _|||||_
 //       {~*~*~*~}
 //     __{*~*~*~*}__
-//    `-------------`
