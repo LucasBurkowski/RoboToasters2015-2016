@@ -77,6 +77,8 @@ public class ClimberDump extends OpMode {
         }
         plow.setPosition(1);
         plow2.setPosition(0);
+        allclear.setPosition(1);
+        allclear2.setPosition(0);
     }
     public void loop(){
         if(gyroActive) {
@@ -120,20 +122,13 @@ public class ClimberDump extends OpMode {
                         case 0:
                             plow.setPosition(0.22);
                             plow2.setPosition(0.74);
-                            allclear.setPosition(1);
-                            allclear2.setPosition(0);
                             break;
                         case 1:
                             plow.setPosition(1);
                             plow2.setPosition(0);
                             break;
-                        case 3:
-                            plow.setPosition(0.22);
-                            plow2.setPosition(0.74);
-                            break;
-                        case 5:
-                            plow.setPosition(1);
-                            plow2.setPosition(0);
+                        case 2:
+                            setAllClear(0,1000);
                             break;
                         default:
                             break;
@@ -170,7 +165,7 @@ public class ClimberDump extends OpMode {
                 break;
             default:
                 telemetry.addData("",
-                        "       ,,,,,\n" +
+                                "       ,,,,,\n" +
                                 "      _|||||_\n" +
                                 "     {~*~*~*~}\n" +
                                 "   __{*~*~*~*}__\n" +
@@ -210,7 +205,15 @@ public class ClimberDump extends OpMode {
             rightSpeed = -0.3;
         }
     }
-
+    void setAllClear(double position, int loops){
+        double difference = (allclear.getPosition() - position) / loops;
+        for(double i = allclear.getPosition(); Math.abs(i - position) < 1E-4; i += difference){
+            allclear.setPosition(i);
+            allclear2.setPosition(1-i);
+        }
+        allclear.setPosition(position);
+        allclear2.setPosition(1 - position);
+    }
 }
 //the cake is a lie
 //the cake is a lie
