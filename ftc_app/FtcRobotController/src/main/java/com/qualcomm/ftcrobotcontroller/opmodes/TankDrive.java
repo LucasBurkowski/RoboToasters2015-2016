@@ -74,6 +74,8 @@ public class TankDrive extends OpMode {
         servoPos = servoMax;
         servoPos2 = servoMax2;
         gyro = hardwareMap.i2cDevice.get("Gyro");
+        servoPos5 = 0;
+        servoPos6 = 1;
         //imu = ClassFactory.createAdaFruitBNO055IMU(TankDrive.this, gyro);
         setEncoderState(DcMotorController.RunMode.RUN_USING_ENCODERS);
     }
@@ -116,11 +118,11 @@ public class TankDrive extends OpMode {
         if (gamepad2.b){
             plowPos = 0;
         }
-        if (gamepad2.y && plowPos != 1){
+        if (gamepad2.y && plowPos != 0){
             servoPos5 = 0;
             servoPos6 = 1;
         }
-        if (gamepad2.x && plowPos != 1){
+        if (gamepad2.x && plowPos != 0){
             servoPos5 = 1;
             servoPos6 = 0;
         }
