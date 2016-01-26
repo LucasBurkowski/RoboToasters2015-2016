@@ -61,8 +61,7 @@ public class TankDrive extends OpMode {
         rightMotor2 = hardwareMap.dcMotor.get("drive_right2");
         arm1 = hardwareMap.dcMotor.get("arm1");
         arm2 = hardwareMap.dcMotor.get("arm2");
-        rightMotor.setDirection(DcMotor.Direction.REVERSE);
-        rightMotor2.setDirection(DcMotor.Direction.REVERSE);
+
         pot = hardwareMap.analogInput.get("pot");
         servoCont = hardwareMap.servoController.get("SrvCnt");
         climberThing = hardwareMap.servo.get("Srv");
