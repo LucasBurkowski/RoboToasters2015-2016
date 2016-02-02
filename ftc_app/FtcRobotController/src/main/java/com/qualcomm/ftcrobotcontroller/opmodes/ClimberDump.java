@@ -1,6 +1,7 @@
 package com.qualcomm.ftcrobotcontroller.opmodes;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
@@ -24,6 +25,8 @@ public class ClimberDump extends OpMode {
     double lastTarget = 0;
     double integral = 0.05;
     double integralValue = 0;
+    double startBrightness;
+    double brightnessThreshold = 0.2;
     private DcMotorController DcDrive, DcDrive2, ArmDrive;//create a DcMotoController
     private DcMotor leftMotor, rightMotor, leftMotor2, rightMotor2, arm1, arm2;//objects for the left and right motors
     private DeviceInterfaceModule cdi;
@@ -33,9 +36,10 @@ public class ClimberDump extends OpMode {
     private IBNO055IMU imu;
     private Servo plow;
     private Servo plow2;
+    private AnalogInput lightSensor;
     boolean gyroActive=true;
     float angle;
-    enum Mode {ResetEncoders, StartEncoders, Next, Moving, Turning, End}
+    enum Mode {ResetEncoders, StartEncoders, Next, Moving, Turning, FindLine, End}
     Mode mode;
     int moveState = 0;
     int threshold = 10;
@@ -52,7 +56,7 @@ public class ClimberDump extends OpMode {
         rightMotor2 = hardwareMap.dcMotor.get("drive_right2");
         arm1 = hardwareMap.dcMotor.get("arm1");
         arm2 = hardwareMap.dcMotor.get("arm2");
-
+        lightSensor = hardwareMap.analogInput.get("Light");
         servoCont = hardwareMap.servoController.get("SrvCnt");
         climberThing = hardwareMap.servo.get("Srv");
         climberThing2 = hardwareMap.servo.get("Srv2");
@@ -80,8 +84,10 @@ public class ClimberDump extends OpMode {
         plow2.setPosition(0);
         allclear.setPosition(0);
         allclear2.setPosition(1);
+        startBrightness = lightSensor.getValue();
     }
     public void loop(){
+        telemetry.addData("Brightness",lightSensor.getValue());
         switch(moveState){
             case 1:
                 plow.setPosition(0.22);
@@ -172,13 +178,22 @@ public class ClimberDump extends OpMode {
                     mode = Mode.ResetEncoders;
                 }
                 break;
+            case FindLine:
+                leftSpeed = 0.3;
+                rightSpeed = -0.3;
+                if(lightSensor.getValue() > startBrightness + brightnessThreshold){
+                    mode = Mode.Next;
+                    leftSpeed = 0;
+                    rightSpeed = 0;
+                }
+                break;
             default:
                 telemetry.addData("",
-                                "            ,,,,,\n" +
-                                "         _|||||_\n" +
+                                "             ,,,,,\n" +
+                                "           _|||||_\n" +
                                 "       {~*~*~*~}\n" +
                                 "   __{*~*~*~*}__\n" +
-                                "  `-------------`");
+                                "    `-------------`");
                 break;
         }
         runMotors();
