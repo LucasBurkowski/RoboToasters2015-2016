@@ -22,6 +22,8 @@ public class ClimberDump extends OpMode {
     double rightSpeed = 0;
     double target = 0;
     double lastTarget = 0;
+    double integral = 0.05;
+    double integralValue = 0;
     private DcMotorController DcDrive, DcDrive2, ArmDrive;//create a DcMotoController
     private DcMotor leftMotor, rightMotor, leftMotor2, rightMotor2, arm1, arm2;//objects for the left and right motors
     private DeviceInterfaceModule cdi;
@@ -125,9 +127,10 @@ public class ClimberDump extends OpMode {
                         mode = Mode.Moving;
                     } else {
                         if (gyroActive) {
-                            kP = 8;
+                            kP = 7;
                             mode = Mode.Turning;
-                            //integral = 0;
+                            integral = 0.05;
+                            integralValue = 0;
                             target = (turns[(moveState - 1) / 2] + Math.PI * 2) % (Math.PI * 2);//set the target, use remainder calculation to make it positive.
                         } else {
                             mode = Mode.Next;
@@ -154,9 +157,15 @@ public class ClimberDump extends OpMode {
                 if(Math.abs(angle - target) < Math.abs(angle - (target - Math.PI * 2))){
                     leftSpeed  = kP * (angle - target);
                     rightSpeed = kP * (angle - target);
+                    integralValue += integral * (angle - target);
+                    leftSpeed += integral;
+                    rightSpeed += integral;
                 }else{
                     leftSpeed  = kP * (angle - (target - Math.PI * 2));
                     rightSpeed = kP * (angle - (target - Math.PI * 2));
+                    integralValue += integral * (angle - (target - Math.PI * 2));
+                    leftSpeed += integral;
+                    rightSpeed += integral;
                 }
                 limitValues();
                 if (Math.abs(target - angle) < 0.05 || Math.abs(angle - (target - Math.PI * 2)) < 0.05){
@@ -165,9 +174,9 @@ public class ClimberDump extends OpMode {
                 break;
             default:
                 telemetry.addData("",
-                                "          ,,,,,\n" +
-                                "        _|||||_\n" +
-                                "      {~*~*~*~}\n" +
+                                "            ,,,,,\n" +
+                                "         _|||||_\n" +
+                                "       {~*~*~*~}\n" +
                                 "   __{*~*~*~*}__\n" +
                                 "  `-------------`");
                 break;
