@@ -17,7 +17,7 @@ import org.swerverobotics.library.interfaces.IBNO055IMU;
  */
 public class ClimberDump extends OpMode {
     double[] dists = {-7656};
-    double[] turns = {Math.PI};
+    double[] turns = {Math.PI * 3/4};
     float startAngle;
     double leftSpeed = 0;//variables for motor speeds
     double rightSpeed = 0;
