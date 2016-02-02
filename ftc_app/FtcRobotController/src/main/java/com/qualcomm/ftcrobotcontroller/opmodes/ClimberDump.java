@@ -16,8 +16,13 @@ import org.swerverobotics.library.interfaces.IBNO055IMU;
 /* Created by team 8487 on 11/29/2015.
  */
 public class ClimberDump extends OpMode {
+<<<<<<< HEAD
     double[] dists = {-7656};
     double[] turns = {Math.PI * 3/4};
+=======
+    double[] dists = {-9200};
+    double[] turns = {Math.PI};
+>>>>>>> parent of 172abd5... Some Auto Progress
     float startAngle;
     double leftSpeed = 0;//variables for motor speeds
     double rightSpeed = 0;
@@ -56,7 +61,10 @@ public class ClimberDump extends OpMode {
         rightMotor2 = hardwareMap.dcMotor.get("drive_right2");
         arm1 = hardwareMap.dcMotor.get("arm1");
         arm2 = hardwareMap.dcMotor.get("arm2");
+<<<<<<< HEAD
         lightSensor = hardwareMap.analogInput.get("Light");
+=======
+>>>>>>> parent of 172abd5... Some Auto Progress
         servoCont = hardwareMap.servoController.get("SrvCnt");
         climberThing = hardwareMap.servo.get("Srv");
         climberThing2 = hardwareMap.servo.get("Srv2");
@@ -69,6 +77,8 @@ public class ClimberDump extends OpMode {
         allclear2 = hardwareMap.servo.get("Srv6");
         climberThing.setPosition(0.8);
         climberThing2.setPosition(0);
+        allclear.setPosition(1);
+        allclear2.setPosition(1);
         try {
             gyro = hardwareMap.i2cDevice.get("Gyro");
             imu = ClassFactory.createAdaFruitBNO055IMU(ClimberDump.this, gyro);
@@ -82,6 +92,7 @@ public class ClimberDump extends OpMode {
         }
         plow.setPosition(1);
         plow2.setPosition(0);
+<<<<<<< HEAD
         allclear.setPosition(0);
         allclear2.setPosition(1);
         startBrightness = lightSensor.getValue();
@@ -104,6 +115,12 @@ public class ClimberDump extends OpMode {
             default:
                 break;
         }
+=======
+        allclear.setPosition(1);
+        allclear2.setPosition(0);
+    }
+    public void loop(){
+>>>>>>> parent of 172abd5... Some Auto Progress
         if(gyroActive) {
             angle = (float) imu.getAngularOrientation().heading - startAngle;
         }else{
@@ -132,8 +149,13 @@ public class ClimberDump extends OpMode {
                         target = dists[moveState / 2];
                         mode = Mode.Moving;
                     } else {
+<<<<<<< HEAD
                         if (gyroActive) {
                             kP = 7;
+=======
+                        if(gyroActive) {
+                            kP = 8;
+>>>>>>> parent of 172abd5... Some Auto Progress
                             mode = Mode.Turning;
                             integral = 0.05;
                             integralValue = 0;
@@ -142,12 +164,27 @@ public class ClimberDump extends OpMode {
                             mode = Mode.Next;
                         }
                     }
+                    switch(moveState){
+                        case 0:
+                            plow.setPosition(0.22);
+                            plow2.setPosition(0.74);
+                            break;
+                        case 1:
+                            plow.setPosition(1);
+                            plow2.setPosition(0);
+                            break;
+                        case 2:
+                            setAllClear(0,1000);
+                            break;
+                        default:
+                            break;
+                    }
+                    moveState++;
                 } else {
                     mode = Mode.End;
                     leftSpeed = 0;
                     rightSpeed = 0;
                 }
-                moveState++;
                 break;
             case Moving:
                 if (!(Math.abs(-target - leftMotor.getCurrentPosition()) < threshold && Math.abs(target - rightMotor2.getCurrentPosition()) < threshold && leftMotor.getPower() == 0 && rightMotor2.getPower() == 0)) {
@@ -174,7 +211,7 @@ public class ClimberDump extends OpMode {
                     rightSpeed += integral;
                 }
                 limitValues();
-                if (Math.abs(target - angle) < 0.05 || Math.abs(angle - (target - Math.PI * 2)) < 0.05){
+                if (Math.abs(target - angle) < 0.1 || Math.abs(angle - (target - Math.PI * 2)) < 0.1){
                     mode = Mode.ResetEncoders;
                 }
                 break;
@@ -189,9 +226,15 @@ public class ClimberDump extends OpMode {
                 break;
             default:
                 telemetry.addData("",
+<<<<<<< HEAD
                                 "             ,,,,,\n" +
                                 "           _|||||_\n" +
                                 "       {~*~*~*~}\n" +
+=======
+                                "       ,,,,,\n" +
+                                "      _|||||_\n" +
+                                "     {~*~*~*~}\n" +
+>>>>>>> parent of 172abd5... Some Auto Progress
                                 "   __{*~*~*~*}__\n" +
                                 "    `-------------`");
                 break;
