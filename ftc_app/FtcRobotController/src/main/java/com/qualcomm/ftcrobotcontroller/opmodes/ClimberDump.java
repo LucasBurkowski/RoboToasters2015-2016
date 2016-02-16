@@ -1,7 +1,6 @@
 package com.qualcomm.ftcrobotcontroller.opmodes;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
@@ -16,13 +15,9 @@ import org.swerverobotics.library.interfaces.IBNO055IMU;
 /* Created by team 8487 on 11/29/2015.
  */
 public class ClimberDump extends OpMode {
-<<<<<<< HEAD
-    double[] dists = {-7656};
-    double[] turns = {Math.PI * 3/4};
-=======
-    double[] dists = {-9200};
-    double[] turns = {Math.PI};
->>>>>>> parent of 172abd5... Some Auto Progress
+
+    double[] dists = {-7656,0,1500, 500, 0};
+    double[] turns = {Math.PI * 3/4, Math.PI * 3/4, Math.PI, Math.PI / 2};
     float startAngle;
     double leftSpeed = 0;//variables for motor speeds
     double rightSpeed = 0;
@@ -30,8 +25,6 @@ public class ClimberDump extends OpMode {
     double lastTarget = 0;
     double integral = 0.05;
     double integralValue = 0;
-    double startBrightness;
-    double brightnessThreshold = 0.2;
     private DcMotorController DcDrive, DcDrive2, ArmDrive;//create a DcMotoController
     private DcMotor leftMotor, rightMotor, leftMotor2, rightMotor2, arm1, arm2;//objects for the left and right motors
     private DeviceInterfaceModule cdi;
@@ -41,10 +34,9 @@ public class ClimberDump extends OpMode {
     private IBNO055IMU imu;
     private Servo plow;
     private Servo plow2;
-    private AnalogInput lightSensor;
     boolean gyroActive=true;
     float angle;
-    enum Mode {ResetEncoders, StartEncoders, Next, Moving, Turning, FindLine, End}
+    enum Mode {ResetEncoders, StartEncoders, Next, Moving, Turning, End}
     Mode mode;
     int moveState = 0;
     int threshold = 10;
@@ -61,10 +53,6 @@ public class ClimberDump extends OpMode {
         rightMotor2 = hardwareMap.dcMotor.get("drive_right2");
         arm1 = hardwareMap.dcMotor.get("arm1");
         arm2 = hardwareMap.dcMotor.get("arm2");
-<<<<<<< HEAD
-        lightSensor = hardwareMap.analogInput.get("Light");
-=======
->>>>>>> parent of 172abd5... Some Auto Progress
         servoCont = hardwareMap.servoController.get("SrvCnt");
         climberThing = hardwareMap.servo.get("Srv");
         climberThing2 = hardwareMap.servo.get("Srv2");
@@ -92,35 +80,10 @@ public class ClimberDump extends OpMode {
         }
         plow.setPosition(1);
         plow2.setPosition(0);
-<<<<<<< HEAD
         allclear.setPosition(0);
         allclear2.setPosition(1);
-        startBrightness = lightSensor.getValue();
     }
     public void loop(){
-        telemetry.addData("Brightness",lightSensor.getValue());
-        switch(moveState){
-            case 1:
-                plow.setPosition(0.22);
-                plow2.setPosition(0.74);
-                break;
-            //case 2:
-                //plow.setPosition(1);
-                //plow2.setPosition(0);
-                //break;
-            case 3:
-                allclear.setPosition(1);
-                allclear2.setPosition(0);
-                break;
-            default:
-                break;
-        }
-=======
-        allclear.setPosition(1);
-        allclear2.setPosition(0);
-    }
-    public void loop(){
->>>>>>> parent of 172abd5... Some Auto Progress
         if(gyroActive) {
             angle = (float) imu.getAngularOrientation().heading - startAngle;
         }else{
@@ -149,13 +112,10 @@ public class ClimberDump extends OpMode {
                         target = dists[moveState / 2];
                         mode = Mode.Moving;
                     } else {
-<<<<<<< HEAD
-                        if (gyroActive) {
-                            kP = 7;
-=======
+
                         if(gyroActive) {
                             kP = 8;
->>>>>>> parent of 172abd5... Some Auto Progress
+
                             mode = Mode.Turning;
                             integral = 0.05;
                             integralValue = 0;
@@ -175,6 +135,10 @@ public class ClimberDump extends OpMode {
                             break;
                         case 2:
                             setAllClear(0,1000);
+                            break;
+                        case 3:
+                            plow.setPosition(0.22);
+                            plow2.setPosition(0.74);
                             break;
                         default:
                             break;
@@ -215,28 +179,8 @@ public class ClimberDump extends OpMode {
                     mode = Mode.ResetEncoders;
                 }
                 break;
-            case FindLine:
-                leftSpeed = 0.3;
-                rightSpeed = -0.3;
-                if(lightSensor.getValue() > startBrightness + brightnessThreshold){
-                    mode = Mode.Next;
-                    leftSpeed = 0;
-                    rightSpeed = 0;
-                }
-                break;
             default:
-                telemetry.addData("",
-<<<<<<< HEAD
-                                "             ,,,,,\n" +
-                                "           _|||||_\n" +
-                                "       {~*~*~*~}\n" +
-=======
-                                "       ,,,,,\n" +
-                                "      _|||||_\n" +
-                                "     {~*~*~*~}\n" +
->>>>>>> parent of 172abd5... Some Auto Progress
-                                "   __{*~*~*~*}__\n" +
-                                "    `-------------`");
+                telemetry.addData("","yay");
                 break;
         }
         runMotors();
@@ -281,18 +225,12 @@ public class ClimberDump extends OpMode {
         allclear.setPosition(position);
         allclear2.setPosition(1 - position);
     }
+
+    public void stop(){
+        imu.close();
+        gyro.close();
+    }
 }
-//the cake is a lie
-//the cake is a lie
-//the cake is a lie
-//the cake is a lie
-//the cake is t rue
-//the cake is a lie
-//the cake is a lie
-//the cake is a lie
-//the cake is a lie
-
-
 
 
 

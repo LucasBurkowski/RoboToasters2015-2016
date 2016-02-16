@@ -11,7 +11,6 @@ import com.qualcomm.robotcore.hardware.ServoController;
 import com.qualcomm.robotcore.util.Range;
 
 import org.swerverobotics.library.interfaces.IBNO055IMU;
-
 /**
  * Created by team 8487 on 11/8/2015.
  * //
@@ -37,8 +36,8 @@ public class TankDrive extends OpMode {
     double servoPos4 = 0;
     double servoPos5 = 0;
     double servoPos6 = 1;
-    double servoMin = 0, servoMin2 = .65;
-    double servoMax = .8, servoMax2 = 0;
+    double servoMin = 1, servoMin2 = 1;
+    double servoMax = 0, servoMax2 = 0;
     int servoDeb = 30;
     private DcMotorController DcDrive, DcDrive2, ArmDrive;//create a DcMotoController
     private DcMotor leftMotor, rightMotor, leftMotor2, rightMotor2, arm1, arm2;//objects for the left and right motors
@@ -89,7 +88,6 @@ public class TankDrive extends OpMode {
         //telemetry.addData("Angle", angle);
     }
     public void stop(){}
-
         //armPower = gamepad2.left_stick_y;
         //servoPos = (gamepad2.left_trigger != 0) ? servoMin : servoMax;
         //servoPos2 = (gamepad2.right_trigger !=0) ? servoMin : servoMax;
@@ -113,7 +111,7 @@ public class TankDrive extends OpMode {
             servoPos2 = servoMax2;
         }
         if (gamepad2.a){
-            plowPos = 1;
+            plowPos = 0.95;
         }
         if (gamepad2.b){
             plowPos = 0;
@@ -128,9 +126,9 @@ public class TankDrive extends OpMode {
         }
         if(Math.abs(plowCurrent - plowPos) > 1E-6){//since the math isn't exact sometimes, just get close
             if(plowCurrent > plowPos){
-                plowCurrent -= 0.01;
+                plowCurrent -= 0.05;
             }else{
-                plowCurrent += 0.01;
+                plowCurrent += 0.05;
             }
         }else{//make it exact
             plowCurrent = plowPos;
@@ -197,4 +195,3 @@ public class TankDrive extends OpMode {
     }
 
 }
-
