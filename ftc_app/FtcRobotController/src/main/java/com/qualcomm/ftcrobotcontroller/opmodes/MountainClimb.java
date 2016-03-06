@@ -5,7 +5,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
 import com.qualcomm.robotcore.hardware.I2cDevice;
-import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoController;
 
@@ -15,22 +14,14 @@ import org.swerverobotics.library.interfaces.IBNO055IMU;
 
 /* Created by team 8487 on 11/29/2015.
  */
-public class ClimberDump extends OpMode {
-
-    double[] dists = {-7656, -100, 1500, 500, 0};
-    double[] turns = {0, Math.PI * 3 / 4, Math.PI, Math.PI / 2};
-
+public class MountainClimb extends OpMode {
+    double[] dists = {-4000, 2500, -2500, 2500, 2500, 2500};
+    double[] turns = {0,0,Math.PI / 2, Math.PI / 2, Math.PI / 2, Math.PI / 2};
     float startAngle;
     double leftSpeed = 0;//variables for motor speeds
     double rightSpeed = 0;
     double target = 0;
-    double integral = 0.05;
-    double integralValue = 0;
-    double allClearSpeed = 0;
-    double allClearTarget = 0;
-    double plowTarget = 1;
-    double plowSpeed = 0.1; //distance per loop the plaw goes
-    private OpticalDistanceSensor lightSensor;
+    double lastTarget = 0;
     private DcMotorController DcDrive, DcDrive2, ArmDrive;//create a DcMotoController
     private DcMotor leftMotor, rightMotor, leftMotor2, rightMotor2, arm1, arm2;//objects for the left and right motors
     private DeviceInterfaceModule cdi;
@@ -42,15 +33,13 @@ public class ClimberDump extends OpMode {
     private Servo plow2;
     boolean gyroActive=true;
     float angle;
-    double startBrightness;
-    enum Mode {ResetEncoders, StartEncoders, Next, Moving, Turning, FindLine, End}
+    enum Mode {ResetEncoders, StartEncoders, Next, Moving, Turning, End}
     Mode mode;
     int moveState = 0;
     int threshold = 10;
     double kP;
-    public ClimberDump(){}
+    public MountainClimb(){}
     public void init(){
-        lightSensor = hardwareMap.opticalDistanceSensor.get("ODS");
         DcDrive = hardwareMap.dcMotorController.get("drive_controller");//find the motor controller on the robot
         DcDrive2 = hardwareMap.dcMotorController.get("drive_controller2");//find the motor controller on the robot
         cdi = hardwareMap.deviceInterfaceModule.get("cdi");
@@ -64,23 +53,22 @@ public class ClimberDump extends OpMode {
         servoCont = hardwareMap.servoController.get("SrvCnt");
         climberThing = hardwareMap.servo.get("Srv");
         climberThing2 = hardwareMap.servo.get("Srv2");
-        leftMotor.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
-        rightMotor2.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
+        leftMotor.setChannelMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
+        rightMotor2.setChannelMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
         mode = Mode.ResetEncoders;
         plow = hardwareMap.servo.get("Srv3");
         plow2 = hardwareMap.servo.get("Srv4");
         allclear = hardwareMap.servo.get("Srv5");
         allclear2 = hardwareMap.servo.get("Srv6");
-        startBrightness = lightSensor.getLightDetected();
         climberThing.setPosition(0.8);
         climberThing2.setPosition(0);
-        allclear.setPosition(1);
+        allclear.setPosition(0);
         allclear2.setPosition(1);
         try {
             gyro = hardwareMap.i2cDevice.get("Gyro");
-            imu = ClassFactory.createAdaFruitBNO055IMU(ClimberDump.this, gyro);
+            imu = ClassFactory.createAdaFruitBNO055IMU(MountainClimb.this, gyro);
         }catch (UnexpectedI2CDeviceException e){
-            gyroActive=false;
+          gyroActive=false;
         }
         if(gyroActive){
             startAngle = (float) imu.getAngularOrientation().heading;
@@ -89,8 +77,6 @@ public class ClimberDump extends OpMode {
         }
         plow.setPosition(1);
         plow2.setPosition(0);
-        allclear.setPosition(0);
-        allclear2.setPosition(1);
     }
     public void loop(){
         if(gyroActive) {
@@ -117,16 +103,14 @@ public class ClimberDump extends OpMode {
                 if (moveState < dists.length * 2) {
                     if (moveState % 2 == 0) {
                         kP = 0.002;
+                        lastTarget = target;
                         target = dists[moveState / 2];
                         mode = Mode.Moving;
                     } else {
-
                         if(gyroActive) {
                             kP = 8;
-
                             mode = Mode.Turning;
-                            integral = 0.05;
-                            integralValue = 0;
+                            //integral = 0;
                             target = (turns[(moveState - 1) / 2] + Math.PI * 2) % (Math.PI * 2);//set the target, use remainder calculation to make it positive.
                         } else {
                             mode = Mode.Next;
@@ -134,18 +118,20 @@ public class ClimberDump extends OpMode {
                     }
                     switch(moveState){
                         case 0:
-                            plowTarget = 0.26;
+                            plow.setPosition(0.22);
+                            plow2.setPosition(0.74);
                             break;
                         case 1:
-                            plowTarget = 1;
-                            mode = Mode.FindLine;
-                            break;
-                        case 2:
-                            setAllClear(0,500);
+                            plow.setPosition(1);
+                            plow2.setPosition(0);
                             break;
                         case 3:
-                            setAllClear(1, 50);
-                            plowTarget = 0.26;
+                            plow.setPosition(0.22);
+                            plow2.setPosition(0.74);
+                            break;
+                        case 5:
+                            plow.setPosition(1);
+                            plow2.setPosition(0);
                             break;
                         default:
                             break;
@@ -159,7 +145,7 @@ public class ClimberDump extends OpMode {
                 break;
             case Moving:
                 if (!(Math.abs(-target - leftMotor.getCurrentPosition()) < threshold && Math.abs(target - rightMotor2.getCurrentPosition()) < threshold && leftMotor.getPower() == 0 && rightMotor2.getPower() == 0)) {
-                    getSpeeds();
+                    getSpeeds(angle);
                     telemetry.addData("oh noes-ness", Math.abs(target - leftMotor.getCurrentPosition()) + Math.abs(target - rightMotor.getCurrentPosition()));
                 } else {
                     mode = Mode.ResetEncoders;
@@ -171,55 +157,30 @@ public class ClimberDump extends OpMode {
                 if(Math.abs(angle - target) < Math.abs(angle - (target - Math.PI * 2))){
                     leftSpeed  = kP * (angle - target);
                     rightSpeed = kP * (angle - target);
-                    integralValue += integral * (angle - target);
-                    leftSpeed += integral * integralValue;
-                    rightSpeed += integral * integralValue;
                 }else{
                     leftSpeed  = kP * (angle - (target - Math.PI * 2));
                     rightSpeed = kP * (angle - (target - Math.PI * 2));
-                    integralValue += integral * (angle - (target - Math.PI * 2));
-                    leftSpeed += integral * integralValue;
-                    rightSpeed += integral * integralValue;
                 }
                 limitValues();
                 if (Math.abs(target - angle) < 0.1 || Math.abs(angle - (target - Math.PI * 2)) < 0.1){
                     mode = Mode.ResetEncoders;
                 }
-                break;
-            case FindLine:
-                leftSpeed = 0.2;
-                rightSpeed = -0.2;
-                if(lightSensor.getLightDetected() > startBrightness + 0.2) {
-                    mode = Mode.ResetEncoders;
-                }
-                break;
+
+                 break;
             default:
-                telemetry.addData("","yay");
+                telemetry.addData("",
+                        "       ,,,,,\n" +
+                        "      _|||||_\n" +
+                        "     {~*~*~*~}\n" +
+                        "   __{*~*~*~*}__\n" +
+                        "  `-------------`");
                 break;
         }
         runMotors();
-        moveServos();
         telemetry.addData("angle", angle);
         telemetry.addData("diff", target - rightMotor2.getCurrentPosition());
         telemetry.addData("mode", mode + " " + moveState);
     }
-    void moveServos(){
-        if(Math.abs(allclear.getPosition() - allClearTarget) < allClearSpeed){
-            allclear.setPosition(allClearTarget);
-            allclear2.setPosition(1 - allClearTarget);
-        }else{
-            allclear.setPosition(allclear.getPosition() + allClearSpeed);
-            allclear2.setPosition(allclear2.getPosition() - allClearSpeed);
-        }
-        if(Math.abs(plow.getPosition() - plowTarget) < plowSpeed){
-            plow.setPosition(plowTarget);
-            plow2.setPosition(1 - plowTarget);
-        }else{
-            plow.setPosition(plow.getPosition() + plowSpeed);
-            plow2.setPosition(plow2.getPosition() - plowSpeed);
-        }
-    }
-
     void runMotors(){
 
         leftMotor.setPower(leftSpeed);
@@ -228,37 +189,44 @@ public class ClimberDump extends OpMode {
         rightMotor.setPower(rightSpeed);
     }
     void setEncoderState(DcMotorController.RunMode r){
-        leftMotor.setMode(r);
-        rightMotor2.setMode(r);
+        leftMotor.setChannelMode(r);
+        rightMotor2.setChannelMode(r);
     }
-    //calculate the motor speeds
-    void getSpeeds(){
+    void getSpeeds(double angle){//calculate the motor speeeds
         leftSpeed = (-target - leftMotor.getCurrentPosition()) * kP;//set the proportional drivers
         rightSpeed = (target - rightMotor2.getCurrentPosition()) * kP;
         limitValues();//limit the values
     }
     void limitValues(){
-        if(leftSpeed > 0.3){//limit the values to 1
-            leftSpeed = 0.3;
-        }else if(leftSpeed < -0.3){
-            leftSpeed = -0.3;
+        if(leftSpeed > 0.5){//limit the values to 1
+            leftSpeed = 0.5;
+        }else if(leftSpeed < -0.5){
+            leftSpeed = -0.5;
         }
-        if(rightSpeed > 0.3){
-            rightSpeed= 0.3;
-        }else if(rightSpeed < -0.3){
-            rightSpeed = -0.3;
+        if(rightSpeed > 0.5){
+            rightSpeed= 0.5;
+        }else if(rightSpeed < -0.5){
+            rightSpeed = -0.5;
         }
-    }
-    void setAllClear(double position, int loops){
-        allClearSpeed = (allclear.getPosition() - position) / loops;
-        allClearTarget = position;
     }
 
     public void stop(){
         imu.close();
         gyro.close();
     }
+
 }
+//the cake is a lie
+//the cake is a lie
+//the cake is a lie
+//the cake is a lie
+//the cake is t rue
+//the cake is a lie
+//the cake is a lie
+//the cake is a lie
+//the cake is a lie
+
+
 
 
 
@@ -266,3 +234,4 @@ public class ClimberDump extends OpMode {
 //        _|||||_
 //       {~*~*~*~}
 //     __{*~*~*~*}__
+//    `-------------`

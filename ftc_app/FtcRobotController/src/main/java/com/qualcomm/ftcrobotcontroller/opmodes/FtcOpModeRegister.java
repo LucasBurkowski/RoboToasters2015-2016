@@ -55,5 +55,6 @@ public class FtcOpModeRegister implements OpModeRegister {
     manager.register ("TankDrive", TankDrive.class);
     manager.register("AutonomousMode", AutonomousMode.class);
     manager.register("AutonClimberDump", ClimberDump.class);
+    manager.register("AutonMountClimbRed",MountainClimb.class);
   }
 }

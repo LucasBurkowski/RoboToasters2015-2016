@@ -139,6 +139,9 @@ public class TankDrive extends OpMode {
         if(gamepad1.left_stick_button && gamepad1.right_stick_button){//enable/disable encoders for teleop running
            setEncoderState(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
         }
+        if(gamepad1.left_bumper && gamepad1.right_bumper){
+            setEncoderState(DcMotorController.RunMode.RUN_USING_ENCODERS);
+        }
         servoDeb++;//servo debounce-- stops the servo variable from rapidly changing back and forth between up and down.
         telemetry.addData("encoders", leftMotor.getChannelMode());
     }
@@ -161,10 +164,11 @@ public class TankDrive extends OpMode {
             arm1.setPower(armPower);
             arm2.setPower(armPower);
        // }
+        //this comment is useless :)
     }
     void setEncoderState(DcMotorController.RunMode r){
-        leftMotor.setChannelMode(r);
-        rightMotor2.setChannelMode(r);
+        leftMotor.setMode(r);
+        rightMotor2.setMode(r);
     }
     void mix(){
         /*this mixing algorithm works by doing the following:
